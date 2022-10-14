@@ -205,6 +205,7 @@ INSTALLED_APPS = [
     'ml',
     'webhooks',
     'labels_manager',
+    'sensormodel',
 ]
 
 MIDDLEWARE = [
