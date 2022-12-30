@@ -213,7 +213,13 @@ export const Menubar = ({
                   data-external
                   exact
                 />
-
+                <Menu.Item
+                  label="Home"
+                  to="/landingpage/"
+                  icon={<IconBook/>}
+                  data-external
+                  exact
+                />
                 <Menu.Spacer/>
 
                 <VersionNotifier showNewVersion/>
