@@ -76,7 +76,7 @@ jobs:
 
   validate_submodules:
     name: "Validate"
-    uses: heartexlabs/label-studio/.github/workflows/submodules-validator.yml@develop
+    uses: AI-Sensus/label-studio/.github/workflows/submodules-validator.yml@develop
     with:
       head_sha: ${{ github.sha }}
       base_sha: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -85,7 +85,7 @@ jobs:
   gitleaks:
     name: "Linter"
     if: github.event_name == 'pull_request'
-    uses: heartexlabs/label-studio/.github/workflows/gitleaks.yml@develop
+    uses: AI-Sensus/label-studio/.github/workflows/gitleaks.yml@develop
     with:
       head_sha: ${{ github.sha }}
       base_sha: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -95,7 +95,7 @@ jobs:
     needs:
       - changed_files
     if: needs.changed_files.outputs.src == 'true'
-    uses: heartexlabs/label-studio/.github/workflows/bandit.yml@develop
+    uses: AI-Sensus/label-studio/.github/workflows/bandit.yml@develop
     with:
       head_sha: ${{ github.event.pull_request.head.sha || github.event.after }}
 
@@ -110,7 +110,7 @@ jobs:
       needs.changed_files.outputs.commit-message != 'Build frontend'
     permissions:
       contents: write
-    uses: heartexlabs/label-studio/.github/workflows/frontend-build.yml@develop
+    uses: AI-Sensus/label-studio/.github/workflows/frontend-build.yml@develop
     with:
       ref: ${{ github.event.pull_request.head.ref || github.ref }}
 
@@ -125,7 +125,7 @@ jobs:
     permissions:
       contents: read
       checks: write
-    uses: heartexlabs/label-studio/.github/workflows/docker-build.yml@develop
+    uses: AI-Sensus/label-studio/.github/workflows/docker-build.yml@develop
     with:
       sha: ${{ github.event.pull_request.head.sha || github.event.after }}
       branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
@@ -136,7 +136,7 @@ jobs:
     needs:
       - changed_files
     if: needs.changed_files.outputs.src == 'true'
-    uses: heartexlabs/label-studio/.github/workflows/tests.yml@develop
+    uses: AI-Sensus/label-studio/.github/workflows/tests.yml@develop
     with:
       head_sha: ${{ github.event.pull_request.head.sha || github.event.after }}
 
@@ -145,7 +145,7 @@ jobs:
     needs:
       - changed_files
     if: needs.changed_files.outputs.src == 'true'
-    uses: heartexlabs/label-studio/.github/workflows/test_migrations.yml@develop
+    uses: AI-Sensus/label-studio/.github/workflows/test_migrations.yml@develop
     with:
       head_sha: ${{ github.event.pull_request.head.sha || github.event.after }}
     secrets: inherit
@@ -308,7 +308,7 @@ jobs:
       startsWith(github.ref_name, 'ls-release/')
     permissions:
       contents: write
-    uses: heartexlabs/label-studio/.github/workflows/build_pypi.yml@develop
+    uses: AI-Sensus/label-studio/.github/workflows/build_pypi.yml@develop
     with:
       version: ${{ needs.draft-release.outputs.rc-version }}
       ref: ${{ github.ref_name }}
