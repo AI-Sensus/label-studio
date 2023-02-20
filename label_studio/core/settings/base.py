@@ -205,6 +205,11 @@ INSTALLED_APPS = [
     'webhooks',
     'labels_manager',
     'sensormodel',
+<<<<<<< Updated upstream
+=======
+    'subjectannotation',
+    'sensordata'
+>>>>>>> Stashed changes
 ]
 
 MIDDLEWARE = [

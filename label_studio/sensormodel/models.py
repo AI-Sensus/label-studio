@@ -1,6 +1,12 @@
 from django.db import models
 
 class SensorType(models.Model):
+    SENSOR_CHOICES = (
+        ('I', 'IMU'),
+        ('C', 'Camera'),
+        ('M', 'Microphone'),
+    )
+    sensortype = models.CharField(max_length=1, choices=SENSOR_CHOICES,default=1)
     manufacturer = models.CharField(max_length=50, blank=True)
     name = models.CharField(max_length=50, blank=True)
     version = models.CharField(max_length=50, blank=True)
@@ -11,8 +17,8 @@ class SensorType(models.Model):
 class Sensor(models.Model):
     sensor_id = models.IntegerField()
     description = models.TextField(max_length=100, blank=True)
-
-    sensortype = models.ForeignKey(SensorType,on_delete=models.RESTRICT, null=True, blank=True)
+    sensor_hash = models.CharField(max_length=10,blank=True)
+    sensortype = models.ForeignKey(SensorType,on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return 'Sensor: ' + str(self.sensor_id)

@@ -1,9 +1,19 @@
+<<<<<<< Updated upstream
 from django.shortcuts import render, redirect
+=======
+from django.shortcuts import render, redirect 
+>>>>>>> Stashed changes
 from .models import Sensor, Deployment,  Subject, SensorType
 from . import forms
 import os
 from pathlib import Path
+<<<<<<< Updated upstream
 
+=======
+import yaml
+from yaml.loader import SafeLoader
+import json
+>>>>>>> Stashed changes
 
 # Create your views here.
 def tablepage(request):
@@ -114,4 +124,9 @@ def sync_sensor_parser_templates(request):
             if not SensorType.objects.filter(manufacturer=manufacturer,name=name, version=version).exists():
                 SensorType.objects.create(manufacturer=manufacturer,name=name, version=version).save()
     return redirect('sensormodel:tablepage')
+<<<<<<< Updated upstream
         
+=======
+
+
+>>>>>>> Stashed changes
