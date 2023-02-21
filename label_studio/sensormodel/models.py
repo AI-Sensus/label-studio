@@ -11,6 +11,19 @@ class SensorType(models.Model):
     name = models.CharField(max_length=50, blank=True)
     version = models.CharField(max_length=50, blank=True)
 
+    date_row = models.IntegerField(default= 1)
+    time_row = models.IntegerField(default= 1)
+    timestamp_column = models.IntegerField(default= 1)
+    relative_absolute = models.CharField(default='relative', max_length=100)
+    timestamp_unit = models.CharField(default='seconds', max_length=100)
+    format_string = models.CharField(null=True, max_length=100)
+    sensor_id_row = models.IntegerField(default= 1)
+    sensor_id_column = models.IntegerField(null=True)
+    sensor_id_regex = models.CharField(max_length=100, null=True)
+    col_names_row = models.IntegerField(default= 1)
+    comment_style = models.CharField(max_length=100, null=True)
+
+
     def __str__(self):
         return self.manufacturer + '| ' + self.name + '| ' + self.version
 

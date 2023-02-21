@@ -108,14 +108,15 @@
             <tr>
                 <th>Manufacturer</th>
                 <th>Name</th>
-                <th>Version<s/th>
+                <th>Version</th>
+                <th>ID</th>
             </tr>
             {% for sensortype in sensortypes %}
             <tr>
                 <td>{{ sensortype.manufacturer }}</td>
                 <td>{{ sensortype.name }}</td> 
                 <td>{{ sensortype.version }}</td>
-
+                <td>{{ sensortype.id }}</td>
             </tr> 
            {% endfor %} 
         </table>

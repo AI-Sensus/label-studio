@@ -1,19 +1,12 @@
-<<<<<<< Updated upstream
-from django.shortcuts import render, redirect
-=======
 from django.shortcuts import render, redirect 
->>>>>>> Stashed changes
 from .models import Sensor, Deployment,  Subject, SensorType
 from . import forms
+from .utils.validate_config_json import validateConfigJSON
 import os
 from pathlib import Path
-<<<<<<< Updated upstream
-
-=======
 import yaml
 from yaml.loader import SafeLoader
 import json
->>>>>>> Stashed changes
 
 # Create your views here.
 def tablepage(request):
@@ -112,21 +105,27 @@ def delete_subject(request, id):
 def sync_sensor_parser_templates(request):
     if request.method == 'POST':
         path = Path(__file__).parents[2]/ 'sensortypes'
-        parser_templates = []
+        parser_files = []
         files = os.listdir(path)
         for file in files:
             name, ext = os.path.splitext(file)
             if ext == '.yaml':
-                parser_templates.append((name))
-
-        for parser_template in parser_templates:
-            manufacturer, name, version = parser_template.split('_')
+                parser_files.append(file) 
+        SensorType.objects.all().delete()
+        for parser_file in parser_files:
+            file_name = str(parser_file).split('.')[0]
+            manufacturer, name, version = file_name.split('_')
+            
             if not SensorType.objects.filter(manufacturer=manufacturer,name=name, version=version).exists():
-                SensorType.objects.create(manufacturer=manufacturer,name=name, version=version).save()
+                with open(path / str(parser_file)) as f:
+                    config = yaml.load(f, Loader=SafeLoader)
+                    config = str(config).replace("\'", "\"")
+                    config = config.replace("None", "\"\"")
+                    
+                    
+                if validateConfigJSON(str(config)):
+                    config = json.loads(config)
+                    SensorType.objects.create(manufacturer=manufacturer,name=name, version=version, **config).save()
     return redirect('sensormodel:tablepage')
-<<<<<<< Updated upstream
-        
-=======
 
 
->>>>>>> Stashed changes
