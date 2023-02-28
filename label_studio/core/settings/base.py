@@ -206,7 +206,8 @@ INSTALLED_APPS = [
     'labels_manager',
     'sensormodel',
     'subjectannotation',
-    'sensordata'
+    'sensordata',
+    'landingpage'
 ]
 
 MIDDLEWARE = [

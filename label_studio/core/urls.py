@@ -91,6 +91,7 @@ urlpatterns = [
     path('sensormodel/', include('sensormodel.urls')),
     path('subjectannotation/', include('subjectannotation.urls')),
     path('sensordata/', include('sensordata.urls')),
+    path('landingpage/', include('landingpage.urls'))
 ]
 
 if settings.DEBUG:
