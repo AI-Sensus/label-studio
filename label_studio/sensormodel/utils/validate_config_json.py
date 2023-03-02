@@ -3,26 +3,33 @@ import jsonschema
 
 
 def validateConfigJSON(config):
+    """
+    Function that takes in a JSON of a sensor config. It checks if all the fields are filled in
+    according to demands.
+
+    :param config: JSON of sensor config
+    :return: True or False
+    """
     schema = {
         "type": "object",
         "properties": {
             "date_row": {
                 "type": "integer",
-                "minimum": 1,
+                "minimum": 0,
                 "errors":{
                     "Date row must be an integer bigger than 0"
                 }
             },
             "time_row": {
                 "type": "integer",
-                "minimum": 1,
+                "minimum": 0,
                 "errors":{
                     "Time row must be an integer bigger than 0"
                 }
             },
             "timestamp_column": {
                 "type": "integer",
-                "minimum": 1,
+                "minimum": 0,
                 "errors":{
                     "Timestamp column must be an integer bigger than 0"
                 }
@@ -43,21 +50,21 @@ def validateConfigJSON(config):
             },
             "format_string": {
                 "type": "string",
-                "enum": ['DD/MM/YYYY','MM/DD/YYYY','YYYY/DD/MM','YYYY/MM/DD'],
+                "enum": ['',"%d/%m/%Y",'%m/%d/%Y','%Y-%d-%m','%Y-%m-%d' ],
                 "errors":{
-                    "Date format string must be one of the following options: 'DD/MM/YYYY','MM/DD/YYYY','YYYY/DD/MM','YYYY/MM/DD'"
+                    "Date format string must be one of the following options: '%d/%m/%Y','%m/%d/%Y','%Y-%d-%m','%Y-%m-%d'"
                 }
             },
             "sensor_id_row": {
                 "type": "integer",
-                "minimum": 1,
+                "minimum": 0,
                 "errors":{
-                    "Sensor id row row must be an integer bigger than 0"
+                    "Sensor id row must be an integer bigger than 0"
                 }
             },
             "sensor_id_column": {
                 "type": "integer",
-                "minimum": 1,
+                "minimum": 0,
                 "errors":{
                     "Sensor id column must be an integer bigger than 0"
                 }
@@ -67,7 +74,7 @@ def validateConfigJSON(config):
             },
             "col_names_row": {
                 "type": "integer",
-                "minimum": 1,
+                "minimum": 0,
                 "errors":{
                     "Columns names row must be an integer bigger than 0"
                 }
@@ -76,7 +83,7 @@ def validateConfigJSON(config):
                 "type": "string"
             },          
         },
-        "required": ['date_row','time_row','timestamp_column','relative_absolute','timestamp_unit','format_string','sensor_id_row','col_names_row']
+        "required": ['date_row','time_row','timestamp_column','relative_absolute','format_string','col_names_row']
     }
 
 

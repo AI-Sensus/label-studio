@@ -10,7 +10,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 import tempfile
 import json
 from datetime import timedelta
-import requests
+import dateutil.parser
 
 UNITS = {'days': 86400, 'hours': 3600, 'minutes': 60, 'seconds':1, 'milliseconds':0.001}
 
@@ -49,12 +49,7 @@ def addsensordata(request):
             begin_datetime = sensor_data.metadata.utc_dt
             relative_absolute = sensortype.relative_absolute
             # Get time key
-            time_key = [k for k in sensor_data_json if 'time' in k.lower()]
-            if time_key:
-                time_key = time_key[0]
-            else:
-                print("No columns found with 'time' in it")
-            # Get latest recorded timestamp
+            time_key = sensortype.timestamp_column
             times = sensor_data_json[time_key]
             sorted_keys = sorted(times.keys(), key=int)
             penultimate_key = sorted_keys[-2]
@@ -65,10 +60,13 @@ def addsensordata(request):
                 delta = timedelta(seconds= float(end_time) * UNITS[time_unit])
                 end_datetime =  begin_datetime + delta
             elif relative_absolute == 'absolute':
-                # Get end datetime if the timestamp is absolute
+                # Get end datetime if the timestamp is absolute (needs to be checked with )
+                timestamp_unit = sensortype.timestamp_unit
+                end_time = dateutil.parser.parse(end_time)
+                print(end_time)
                 end_datetime = begin_datetime + end_time
-            SensorData.objects.create(name=name, sensordata=sensor_data_json,sensor=sensor,\
-                begin_datetime=begin_datetime, end_datetime=end_datetime).save()
+            # SensorData.objects.create(name=name, sensordata=sensor_data_json,sensor=sensor,\
+            #     begin_datetime=begin_datetime, end_datetime=end_datetime).save()
         return redirect('sensordata:sensordatapage')
     else:
         sensordataform = SensorDataForm()

@@ -66,6 +66,7 @@
                 <th>Begin Date Time</th>
                 <th>End Date Time</th>
                 <th>Sensor</th>
+                <th>Sensor type</th>
                 {% comment %} <th></th>
                 <th></th> {% endcomment %}
             </tr>
@@ -75,6 +76,7 @@
                 <td>{{ sendata.begin_datetime }}</td>
                 <td>{{ sendata.end_datetime }}</td> 
                 <td>{{ sendata.sensor}} </td>
+                <td>{{ sendata.sensor.sensortype.sensortype.get_sensortype_display}} </td>
                 {% comment %} <td><a href="{% url 'sensormodel:adjust_deployment' deployment.id %}">[Edit]</a></td>
                 <td><a href="{% url 'sensormodel:delete_deployment' deployment.id %}">[Delete]</a></td> {% endcomment %}
             </tr> 

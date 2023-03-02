@@ -200,13 +200,6 @@ export const Menubar = ({
                   exact
                 />
                 <Menu.Item
-<<<<<<< Updated upstream
-                label="SensorModel"
-                to="/sensormodel/"
-                icon={<IconBook/>}
-                data-external
-                exact
-=======
                   label="Sensor Model"
                   to="/sensormodel/"
                   icon={<IconBook/>}
@@ -226,7 +219,6 @@ export const Menubar = ({
                   icon={<IconBook/>}
                   data-external
                   exact
->>>>>>> Stashed changes
                 />
 
                 <Menu.Spacer/>
