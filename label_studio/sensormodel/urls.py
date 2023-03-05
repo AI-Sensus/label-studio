@@ -11,9 +11,9 @@ urlpatterns = [
 
     path('deployment/adjust/<int:id>/', views.adjust_deployment, name='adjust_deployment'),
     path('sensor/adjust/<int:id>', views.adjust_sensor, name='adjust_sensor'),
-    path('subjects/adjust/<int:id>', views.adjust_subject, name='adjust_subject') ,
+    path('subject/adjust/<int:id>', views.adjust_subject, name='adjust_subject') ,
 
     path('deployment/delete/<int:id>', views.delete_deployment, name='delete_deployment'),
     path('sensor/delete/<int:id>', views.delete_sensor, name='delete_sensor'),
-    path('subjects/delete/<int:id>', views.delete_subject, name='delete_subject') ,
+    path('subject/delete/<int:id>', views.delete_subject, name='delete_subject') ,
 ]

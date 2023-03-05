@@ -41,7 +41,9 @@ input[type=submit]:hover {
     </div>
     <div class="forms">
         <form action="" method="post">
-            {{ deploymentform }}
+            <table>
+            {{ deploymentform.as_table }}
+            </table>
             <input type="submit" value="Adjust deployment">
         </form>
     </div>

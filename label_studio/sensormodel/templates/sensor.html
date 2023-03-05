@@ -41,7 +41,9 @@ input[type=submit]:hover {
     </div>
     <div class="forms">
         <form action="" method="post">
-            {{ sensorform }}
+            <table>
+            {{ sensorform.as_table }}
+            </table>
             <input type="submit" value="Adjust sensor">
         </form>
     </div>

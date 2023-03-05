@@ -1,4 +1,5 @@
 # Read file names from a given github 'repo' of type(s) '*filetypes'
+# Not used anymore
 
 import github
 

@@ -42,17 +42,23 @@ input[type=submit]:hover {
     <div class="forms">
         <h2>Add deployment</h2>
         <form action="/sensormodel/add" method="post">
-            {{ deploymentform }}
+            <table>
+            {{ deploymentform.as_table }}
+            </table>
             <input type="submit" value="Create deployment">
         </form>
         <h2>Add sensor</h2>
         <form action="/sensormodel/add" method="post">
-            {{ sensorform }}
+            <table>
+            {{ sensorform.as_table }}
+            </table>
             <input type="submit" value="Create sensor">
         </form>
         <h2>Add subject</h2>
         <form action="/sensormodel/add" method="post">
-            {{ subjectform }}
+            <table>
+            {{ subjectform.as_table }}
+            </table>
             <input type="submit" value="Create subject">
         </form>
     </div>

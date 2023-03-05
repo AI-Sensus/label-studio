@@ -17,12 +17,11 @@ class SensorType(models.Model):
     relative_absolute = models.CharField(default='relative', max_length=100)
     timestamp_unit = models.CharField(default='seconds', max_length=100)
     format_string = models.CharField(null=True, max_length=100)
-    sensor_id_row = models.IntegerField(default= 1)
+    sensor_id_row = models.IntegerField(null=True, default= 1)
     sensor_id_column = models.IntegerField(null=True)
     sensor_id_regex = models.CharField(max_length=100, null=True)
     col_names_row = models.IntegerField(default= 1)
     comment_style = models.CharField(max_length=100, null=True)
-
 
     def __str__(self):
         return self.manufacturer + '| ' + self.name + '| ' + self.version
@@ -42,9 +41,7 @@ class Subject(models.Model):
     color = models.CharField(max_length=50)
     size = models.CharField(max_length=50)
     extra_info = models.TextField(max_length=100, blank=True)
-
-    # sensors = models.ForeignKey(Sensor,on_delete=models.RESTRICT,blank=True, null=True) delete
-
+    
     def __str__(self):
         return 'Subject: ' + self.name
 
@@ -59,10 +56,10 @@ class Deployment(models.Model):
     
     sensor = models.ManyToManyField(Sensor,blank=True)
     subject = models.ManyToManyField(Subject,blank=True) 
-
     sensorlist = models.TextField(max_length=500,blank=True)
     subjectlist = models.TextField(max_length=500,blank =True)
 
+    # Function that puts all sensors and all subjects in two list, for easier diplay in HTML table
     def CreateLists(self):
         sensList = self.sensor.all()
         for sens in sensList:
@@ -73,7 +70,6 @@ class Deployment(models.Model):
             self.subjectlist += str(subj)+ ', '
         self.subjectlist = self.subjectlist[:-2]
         
-
     def __str__(self):
         return 'Deployment: ' + self.name
 
