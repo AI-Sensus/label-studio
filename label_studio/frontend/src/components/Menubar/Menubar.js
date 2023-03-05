@@ -200,6 +200,13 @@ export const Menubar = ({
                   exact
                 />
                 <Menu.Item
+                  label="Landingpage"
+                  to="/landingpage/"
+                  icon={<IconBook/>}
+                  data-external
+                  exact
+                />
+                <Menu.Item
                   label="Sensor Model"
                   to="/sensormodel/"
                   icon={<IconBook/>}
