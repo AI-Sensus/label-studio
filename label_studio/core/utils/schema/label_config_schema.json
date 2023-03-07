@@ -17,6 +17,10 @@
         {"type": "boolean"},
         {"type": "number"}
       ]},
+    "@valueList": {
+      "anyOf": [
+        {"type": "string"}
+      ]},
     "tag_with_value": {
       "type": "object",
       "required": [
@@ -33,9 +37,19 @@
     },
     "tag_with_value_required_name": {
       "type": "object",
-      "required": [
-        "@name",
-        "@value"
+      "oneOf": [
+          {
+            "required": [
+                "@name",
+                "@value"
+            ]
+          },
+          {
+            "required": [
+                "@name",
+                "@valueList"
+            ]
+          }
       ],
       "properties": {
         "@value": {
@@ -75,8 +89,8 @@
         "Label": {"$ref": "#/definitions/MaybeMultipleLabel"},
         "Choice": {"$ref": "#/definitions/MaybeMultipleChoice"},
         "Image": {"$ref": "#/definitions/tags_with_value_required_name"},
-        "Text": {"$ref": "#/definitions/tags_with_value_or_object"},
-        "HyperText": {"$ref": "#/definitions/tags_with_value_or_object"},
+        "Text": {"$ref": "#/definitions/tags_with_value_required_name"},
+        "HyperText": {"$ref": "#/definitions/tags_with_value_required_name"},
         "View": {"$ref": "#/definitions/MaybeMultipleView"},
 		"TextArea": {"$ref": "#/definitions/MaybeMultipleTextAreas"}
       }
@@ -202,8 +216,8 @@
         "Labels": {"$ref": "#/definitions/MaybeMultipleLabels"},
         "View": {"$ref": "#/definitions/MaybeMultipleView"},
         "Image": {"$ref": "#/definitions/tags_with_value_required_name"},
-        "Text": {"$ref": "#/definitions/tags_with_value_or_object"},
-        "HyperText": {"$ref": "#/definitions/tags_with_value_or_object"},
+        "Text": {"$ref": "#/definitions/tags_with_value_required_name"},
+        "HyperText": {"$ref": "#/definitions/tags_with_value_required_name"},
 		"TextArea": {"$ref": "#/definitions/MaybeMultipleTextAreas"}
       }
     }

@@ -24,6 +24,26 @@ jobs:
       release_tag: ${{ github.ref_name }}
     secrets: inherit
 
+  build_ubi_docker_image:
+    name: "Build UBI docker image"
+    uses: heartexlabs/label-studio/.github/workflows/docker-build-ubi.yml@develop
+    with:
+      sha: ${{ github.ref_name }}
+      version: ${{ github.ref_name }}
+    secrets: inherit
+
+  build_hugging_face_docker_image:
+    name: "Build Hugging Face docker image"
+    needs:
+      - promote_docker_image
+    uses: heartexlabs/label-studio/.github/workflows/docker-build-ontop.yml@develop
+    with:
+      base_docker_image_version: ${{ github.ref_name }}
+      tags: "hf-latest,hf-${{ github.ref_name }}"
+      dockerfile_path: Dockerfile.hgface
+      ref: ${{ github.ref_name }}
+    secrets: inherit
+
   build-pypi:
     name: "Build"
     permissions:
