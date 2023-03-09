@@ -59,7 +59,7 @@ class Deployment(models.Model):
     sensorlist = models.TextField(max_length=500,blank=True)
     subjectlist = models.TextField(max_length=500,blank =True)
 
-    # Function that puts all sensors and all subjects in two list, for easier diplay in HTML table
+    # Function that puts all sensors and all subjects in two list, for easier display in HTML table
     def CreateLists(self):
         sensList = self.sensor.all()
         for sens in sensList:
