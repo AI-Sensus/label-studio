@@ -11,6 +11,7 @@ class SensorType(models.Model):
     name = models.CharField(max_length=50, blank=True)
     version = models.CharField(max_length=50, blank=True)
 
+    #IMU
     date_row = models.IntegerField(default= 1)
     time_row = models.IntegerField(default= 1)
     timestamp_column = models.IntegerField(default= 1)
@@ -23,6 +24,9 @@ class SensorType(models.Model):
     col_names_row = models.IntegerField(default= 1)
     comment_style = models.CharField(max_length=100, null=True)
 
+    #Camera
+    timezone = models.TextField(default='UTC')
+    
     def __str__(self):
         return self.manufacturer + '| ' + self.name + '| ' + self.version
 
