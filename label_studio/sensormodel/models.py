@@ -6,7 +6,7 @@ class SensorType(models.Model):
         ('C', 'Camera'),
         ('M', 'Microphone'),
     )
-    sensortype = models.CharField(max_length=1, choices=SENSOR_CHOICES,default=1)
+    sensortype = models.CharField(max_length=1, choices=SENSOR_CHOICES,default='I')
     manufacturer = models.CharField(max_length=50, blank=True)
     name = models.CharField(max_length=50, blank=True)
     version = models.CharField(max_length=50, blank=True)

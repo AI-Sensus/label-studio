@@ -45,10 +45,12 @@ def parse_video_frame_rate(file_path):
     """
     if not os.path.isfile(file_path):
         raise FileNotFoundException(file_path)
-
+    
+    print(f'file_path: { file_path} ')
     # https://trac.ffmpeg.org/wiki/FFprobeTips
     args = 'ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of ' \
            'default=noprint_wrappers=1:nokey=1 "{}"'.format(file_path)
+    print(args)
 
     ffprobe_output = subprocess.check_output(args).decode('utf-8')
 
