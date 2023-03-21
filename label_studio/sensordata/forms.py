@@ -1,8 +1,9 @@
 from django import forms
-from sensormodel import models as sensormodelmodels
-
+from sensormodel.models import Sensor
+from projects.models import Project
 
 class SensorDataForm(forms.Form):
     name = forms.CharField(max_length=100, required=False)
-    sensor = forms.ModelChoiceField(sensormodelmodels.Sensor.objects.all())
+    sensor = forms.ModelChoiceField(Sensor.objects.all())
+    project = forms.ModelChoiceField(Project.objects.all())
     file = forms.FileField()
