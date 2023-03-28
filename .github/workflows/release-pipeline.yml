@@ -16,13 +16,38 @@ env:
 jobs:
   promote_docker_image:
     name: "Promote"
+    permissions:
+      contents: read
+      checks: read
     uses: heartexlabs/label-studio/.github/workflows/docker-release-promote.yml@develop
     with:
       release_tag: ${{ github.ref_name }}
     secrets: inherit
 
+  build_ubi_docker_image:
+    name: "Build UBI docker image"
+    uses: heartexlabs/label-studio/.github/workflows/docker-build-ubi.yml@develop
+    with:
+      sha: ${{ github.ref_name }}
+      version: ${{ github.ref_name }}
+    secrets: inherit
+
+  build_hugging_face_docker_image:
+    name: "Build Hugging Face docker image"
+    needs:
+      - promote_docker_image
+    uses: heartexlabs/label-studio/.github/workflows/docker-build-ontop.yml@develop
+    with:
+      base_docker_image_version: ${{ github.ref_name }}
+      tags: "hf-latest,hf-${{ github.ref_name }}"
+      dockerfile_path: Dockerfile.hgface
+      ref: ${{ github.ref_name }}
+    secrets: inherit
+
   build-pypi:
     name: "Build"
+    permissions:
+      contents: write
     uses: heartexlabs/label-studio/.github/workflows/build_pypi.yml@develop
     with:
       version: ${{ github.ref_name }}
@@ -37,7 +62,7 @@ jobs:
     needs:
       - build-pypi
     steps:
-      - uses: hmarr/debug-action@v2.0.1
+      - uses: hmarr/debug-action@v2.1.0
 
       - name: DispatchEvent
         uses: actions/github-script@v6

@@ -1,20 +1,25 @@
 ---
 title: Deploy Label Studio Enterprise on Kubernetes
-short: Deploy on Kubernetes
-badge: <i class='ent'></i>
+short: Kubernetes
+tier: enterprise
 type: guide
-order: 216
+order: 108
+order_enterprise: 133
 meta_title: Deploy Label Studio Enterprise on Kubernetes
 meta_description: Deploy Label Studio Enterprise on Kubernetes, such as on Amazon Elastic Container Service for Kubernetes, to create machine learning and data science projects in a scalable containerized environment. 
+section: "Install"
+
 ---
 
 Deploy Label Studio Enterprise on a Kubernetes Cluster using Helm 3. You can use this Helm chart to set up Label Studio Enterprise for deployment onto a Kubernetes cluster and install, upgrade, and manage the application. 
 
 Your Kubernetes cluster can be self-hosted or installed somewhere such as Amazon EKS. See the Amazon tutorial on how to [Deploy a Kubernetes Application with Amazon Elastic Container Service for Kubernetes](https://aws.amazon.com/getting-started/hands-on/deploy-kubernetes-app-amazon-eks/) for more about deploying an app on Amazon EKS.
 
-<div class="enterprise"><p>
+<div class="enterprise-only">
+
 To install Label Studio Community Edition, see <a href="install.html">Install and Upgrade Label Studio</a>. This page is specific to the Enterprise version of Label Studio.
-</p></div>
+
+</div>
 
 ## Install Label Studio Enterprise on Kubernetes
 
@@ -46,19 +51,30 @@ Your Kubernetes cluster can be self-hosted or installed somewhere such as Amazon
 To plan the capacity of your Kubernetes cluster, refer to these guidelines. 
 
 Label Studio Enterprise has the following default configurations for resource requests, resource limits, and replica counts:
+
 ```yaml
 app:
   replicas: 1
   resources:
     requests:
-      memory: 384Mi
-      cpu: 250m
-    limits:
       memory: 1024Mi
-      cpu: 750m
+      cpu: 1000m
+    limits:
+      memory: 6144Mi
+      cpu: 4000m
 
 rqworker:
-  replicas: 1
+  queues:
+    high:
+      replicas: 1
+    low:
+      replicas: 1
+    default:
+      replicas: 1
+    critical:
+      replicas: 1
+    all:
+      replicas: 1
   resources:
     requests:
       memory: 256Mi
@@ -88,14 +104,14 @@ Install Label Studio Enterprise and set up a PostgreSQL and Redis databases to s
 ### Add the Helm chart repository to your Kubernetes cluster
 Add the Helm chart repository to your Kubernetes cluster to easily install and update Label Studio Enterprise.
 
-1. From the command line, replace `<USERNAME>` and `<PASSWORD>` with the credentials provided by your account manager:
+1. From the command line:
    ```shell
-   helm repo add heartex https://charts.heartex.com/ --username <USERNAME> --password <PASSWORD>
+   helm repo add heartex https://charts.heartex.com/
    helm repo update heartex
    ```
 2. If you want, check for available versions:
    ```shell
-   helm search repo heartex/label-studio-enterprise
+   helm search repo heartex/label-studio
    ```
 
 ### Configure Kubernetes secrets
@@ -125,15 +141,14 @@ You must configure a `values.yaml` file for your Label Studio Enterprise deploym
 Example `values.yaml` file for a minimal installation of Label Studio Enterprise:
 ```yaml
 global:
+  image:
+    repository: heartexlabs/label-studio-enterprise
+    tag: ""
+  
   imagePullSecrets:
     # Defined with earlier kubectl command
     - name: heartex-pull-key
-  
-  # This value refers to the Kubernetes secret that you 
-  # created that contains your enterprise license.
-  enterpriseLicense:
-    secretName: "lse-license"
-    secretKey: "license"
+
   pgConfig:
     # PostgreSql instance hostname
     host: "postgresql"
@@ -155,16 +170,20 @@ global:
   # extraEnvironmentSecrets is a list of extra environment secrets to set in the deployment, empty by default
   extraEnvironmentSecrets: {}
 
-  # Persistence is turned off by default.
-  # See more in the [Set up persistent storage](https://labelstud.io/guide/persistent_storage.html)
-  persistence:
-    enabled: false
-  
+enterprise:
+   enabled: true
+   # This value refers to the Kubernetes secret that you 
+   # created that contains your enterprise license.
+   enterpriseLicense:
+      secretName: "lse-license"
+      secretKey: "license"
+
 app:
   # High Availability (HA) mode: adjust according to your resources
   replicas: 1
   # Ingress config for Label Studio
   ingress:
+    enabled: true
     host: studio.yourdomain.com
     # You might need to set path to '/*' in order to use this with ALB ingress controllers.
     path: /
@@ -186,16 +205,32 @@ app:
       cpu: 4000m
 
 rqworker:
-   # HA mode: adjust according to your resources
-   replicas: 2
+   # HA mode: adjust according to your business needs/resources
+   queues:
+      high:
+         replicas: 2
+      low:
+         replicas: 2
+      default:
+         replicas: 2
+      critical:
+         replicas: 2
+      all:
+         replicas: 2
 
-minio:
-   enabled: false
+postgresql:
+  enabled: false
+
+redis:
+  enabled: false
 ```
 
 Adjust the included defaults to reflect your environment and copy these into a new file and save it as `lse-values.yaml`.
 
-> For more complex configurations, you can create your own file based on the [list of all available Helm values](helm_values.html).
+
+!!! note 
+    For more complex configurations, you can create your own file based on the [list of all available Helm values](helm_values.html).
+
 
 ## Set up TLS for PostgreSQL
 To configure Label Studio Enterprise to use TLS for end-client connections with PostgreSQL, do the following:
@@ -208,7 +243,8 @@ kubectl create secret generic <YOUR_SECRET_NAME> --from-file=ca.crt=<PATH_TO_CA>
 ```
 3. Update your `lse-values.yaml` file with your newly-created Kubernetes secret:
 
-> If `POSTGRE_SSL_MODE: verify-ca`, the server is verified by checking the certificate chain up to the root certificate stored on the client. If `POSTGRE_SSL_MODE: verify-full`, the server host name will be verified to make sure it matches the name stored in the server certificate. The SSL connection will fail if the server certificate cannot be verified. `verify-full` is recommended in most security-sensitive environments.
+!!! note 
+    If `POSTGRE_SSL_MODE: verify-ca`, the server is verified by checking the certificate chain up to the root certificate stored on the client. If `POSTGRE_SSL_MODE: verify-full`, the server host name will be verified to make sure it matches the name stored in the server certificate. The SSL connection will fail if the server certificate cannot be verified. `verify-full` is recommended in most security-sensitive environments.
 
 ```yaml
 global:
@@ -234,7 +270,8 @@ kubectl create secret generic <YOUR_SECRET_NAME> --from-file=ca.crt=<PATH_TO_CA>
 ```
 3. Update your `lse-values.yaml` file with your newly-created Kubernetes secret:
 
-> In the case if you're using self signed certificates that host cannot verify you have to set `redisSslCertReqs` to `None`
+!!! note 
+    In the case if you are using self-signed certificates that host cannot verify you have to set `redisSslCertReqs` to `None`
 
 ```yaml
 global:
@@ -255,7 +292,7 @@ Use Helm to install Label Studio Enterprise on your Kubernetes cluster. Provide 
 
 From the command line, run the following:
 ```shell
-helm install lse heartex/label-studio-enterprise -f lse-values.yaml
+helm install lse heartex/label-studio -f lse-values.yaml
 ```
 
 After installing, check the status of the Kubernetes pod creation:
@@ -267,17 +304,17 @@ kubectl get pods
 
 Restart your Helm release by doing the following from the command line:
 
-1. Identify the <RELEASE_NAME> of the latest Label Studio Enterprise release:
+1. Identify the &lt;RELEASE_NAME&gt; of the latest Label Studio Enterprise release:
 ```shell
 helm list
 ```
 2. Restart the rqworker for Label Studio Enterprise:
 ```shell
-kubectl rollout restart deployment/<RELEASE_NAME>-lse-rqworker
+kubectl rollout restart deployment/<RELEASE_NAME>-ls-rqworker
 ```
 3. Restart the Label Studio Enterprise app:
 ```shell
-kubectl rollout restart deployment/<RELEASE_NAME>-lse-app
+kubectl rollout restart deployment/<RELEASE_NAME>-ls-app
 ```
 
 ## Upgrade Label Studio using Helm
@@ -295,11 +332,11 @@ To upgrade Label Studio Enterprise using Helm, do the following.
    ```
 3. Run the following from the command line to upgrade your deployment:
    ```shell
-   helm upgrade lse heartex/label-studio-enterprise -f lse-values.yaml
+   helm upgrade lse heartex/label-studio -f lse-values.yaml
    ```
    If you want, you can specify a version from the command line:
    ```shell
-   helm upgrade lse heartex/label-studio-enterprise -f lse-values.yaml --set global.image.tag=20210914.154442-d2d1935
+   helm upgrade lse heartex/label-studio -f lse-values.yaml --set global.image.tag=20210914.154442-d2d1935
    ```
    This command overrides the tag value stored in `lse-values.yaml`. You must update the tag value when you upgrade or redeploy your instance to avoid version downgrades.
 

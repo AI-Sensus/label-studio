@@ -6,8 +6,10 @@ from ldclient.integrations import Files, Redis
 from ldclient.feature_store import CacheConfig
 
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from label_studio.core.utils.params import get_bool_env, get_all_env_with_prefix
 from label_studio.core.utils.io import find_node
+from label_studio.core.current_request import get_current_request
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +74,7 @@ def _get_user_repr(user):
     return user_data
 
 
-def flag_set(feature_flag, user):
+def flag_set(feature_flag, user=None):
     """Use this method to check whether this flag is set ON to the current user, to split the logic on backend
     For example,
     ```
@@ -82,6 +84,14 @@ def flag_set(feature_flag, user):
         run_old_code()
     ```
     """
+    if user is None:
+        user = AnonymousUser
+    elif user == 'auto':
+        user = AnonymousUser
+        request = get_current_request()
+        if request and getattr(request, 'user', None) and request.user.is_authenticated:
+            user = request.user
+
     user_dict = _get_user_repr(user)
     env_value = get_bool_env(feature_flag, default=None)
     if env_value is not None:

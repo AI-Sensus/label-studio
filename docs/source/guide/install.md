@@ -1,9 +1,11 @@
 ---
-title: Install and upgrade Label Studio
+title: Install and upgrade 
 type: guide
-order: 200
-meta_title: Install and Upgrade
-meta_description: Label Studio documentation for installing and upgrading Label Studio with Docker, pip, and anaconda to use for your machine learning and data science projects. 
+tier: opensource
+order: 103
+meta_title: Install and Upgrade Label Studio 
+meta_description: "Label Studio documentation: install and upgrade Label Studio with Docker, pip, and anaconda for your machine learning and data science projects." 
+section: "Install"
 ---
 
 Install Label Studio on premises or in the cloud. Choose the installation method that works best for your environment:
@@ -25,7 +27,9 @@ Label Studio is tested with the latest version of Google Chrome and is expected 
 If using other web browsers, or older versions of supported web browsers, unexpected behavior could occur. 
 
 ## Install prerequisite
+
 Install Label Studio in a clean Python environment. We highly recommend using a virtual environment (venv or conda) to reduce the likelihood of package conflicts or missing packages.
+
 
 ## Install with pip
 
@@ -47,24 +51,31 @@ label-studio
 ```
 The default web browser opens automatically at [http://localhost:8080](http://localhost:8080) with Label Studio. See [start Label Studio](start.html) for more options when starting Label Studio.
 
+
 ## Install with Docker
 
 Label Studio is also available as a Docker container. Make sure you have [Docker](https://www.docker.com/) installed on your machine.
 
-
 ### Install with Docker on *nix
 To install and start Label Studio at [http://localhost:8080](http://localhost:8080), storing all labeling data in `./my_project` directory, run the following:
 ```bash
-docker run -it -p 8080:8080 -v `pwd`/mydata:/label-studio/data heartexlabs/label-studio:latest
+docker run -it -p 8080:8080 -v $(pwd)/mydata:/label-studio/data heartexlabs/label-studio:latest
 ```
 
 ### Install with Docker on Windows
 Or for Windows, you have to modify the volumes paths set by `-v` option.
 
 #### Override the default Docker install
-You can override the default Docker install by appending new arguments: 
+You can override the default Docker install by appending new arguments.
+
+In Windows Command Line (cmd):
 ```bash
-docker run -it -p 8080:8080 -v `pwd`/mydata:/label-studio/data heartexlabs/label-studio:latest label-studio --log-level DEBUG
+docker run -it -p 8080:8080 -v %cd%/mydata:/label-studio/data heartexlabs/label-studio:latest label-studio --log-level DEBUG
+```
+
+In PowerShell:
+```bash
+docker run -it -p 8080:8080 -v ${PWD}/mydata:/label-studio/data heartexlabs/label-studio:latest label-studio --log-level DEBUG
 ```
 
 ### Build a local image with Docker
@@ -99,7 +110,7 @@ Transfer it to another VM:
 scp label_studio_latest.tar.gz <ANOTHER_HOST>:/tmp
 ```
 
-SSH into <ANOTHER_HOST> and import the archive:
+SSH into `<ANOTHER_HOST>` and import the archive:
 ```bash
 docker image import /tmp/label_studio_latest.tar.gz
 ```
@@ -128,6 +139,8 @@ cd label-studio
 pip install -e .
 # Run database migrations
 python label_studio/manage.py migrate
+# Collect static files
+python label_studio/manage.py collectstatic
 # Start the server in development mode at http://localhost:8080
 python label_studio/manage.py runserver
 ```
@@ -155,12 +168,14 @@ For Windows users the default installation might fail to build the `lxml` packag
 
 
 ### Errors from Label Studio 
-
 If you see any other errors during installation, try to rerun the installation.
 
 ```bash
 pip install --ignore-installed label-studio
 ```
+
+### OpenBLAS blas_thread_init: pthread_create failed for thread X of Y: Operation not permitted
+Upgrade Docker Engine to the latest available version(>= [20.10.12](https://docs.docker.com/engine/release-notes/#201012)).
 
 
 ## Upgrade Label Studio
