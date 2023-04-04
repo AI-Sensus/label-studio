@@ -21,7 +21,7 @@ UNITS = {'days': 86400, 'hours': 3600, 'minutes': 60, 'seconds':1, 'milliseconds
 
 # Create your views here.
 def sensordatapage(request):
-    sensordata = SensorData.objects.all().order_by('begin_datetime')
+    sensordata = SensorData.objects.all().order_by('project_id')
     return render(request, 'sensordatapage.html', {'sensordata':sensordata})
 
 def addsensordata(request):
@@ -55,26 +55,6 @@ def addsensordata(request):
                 case 'I':
                     parse_IMU(request=request, file_path=file_path,sensor_type_id=sensortype.id,name=name,project_id=project_id)
                 case 'C':
-                    # The temporary video file gets deleted before one can parse and upload, therefore the video is uploaded to the correct project at the start
-                    # Get current user token for authentication
-                    user = request.user
-                    token = Token.objects.get(user=user)
-                    # Get url for importing data to the correct project
-                    import_url = request.build_absolute_uri(reverse('data_import:api-projects:project-import',kwargs={'pk':project_id}))
-                    # Get temporary file URL from the form
-                    file_url = request.FILES['file'].temporary_file_path()
-                    files = {f'{request.FILES["file"]}': open(file_url, 'rb')}
-                    # Import the video to the correct project
-                    requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files)
-                    # Get directory path of just uploaded video
-                    directory=os.path.join(settings.MEDIA_ROOT, settings.UPLOAD_DIR,str(project_id))
-                    # Use a for loop to search for files that match the search string
-                    for root, dirnames, filenames in os.walk(directory):
-                        for filename in fnmatch.filter(filenames, f'*{os.path.basename(file_url)}*'):
-                            # Join the path of the directory with the correct filename
-                            file_path = os.path.join(root, filename)
-
-                    # Parse camera metadata and create SenorData object
                     parse_camera(request=request, file_path=file_path,sensor_type_id=sensortype.id,name=name,project_id=project_id)
                 case 'M':
                     pass
@@ -131,7 +111,11 @@ def parse_IMU(request, file_path, sensor_type_id, name, project_id):
     SensorData.objects.create(name=name, sensortype=sensortype,\
         begin_datetime=begin_datetime, end_datetime=end_datetime, project_id=project_id).save()
     
+
+
 def parse_camera(request, file_path, sensor_type_id, name, project_id):
+    # Upload video to project
+    upload_sensor_data(request=request, name=name, file_path=file_path ,project_id=project_id)
     # Get sensortype config
     sensortype = SensorType.objects.get(id=sensor_type_id)
     sensor_timezone = sensortype.timezone
@@ -157,4 +141,16 @@ def upload_sensor_data(request, name, file_path, project_id):
     # Get temporary file URL from the form
     files = {f'{name}': open(file_path, 'rb')}
     # Import the video to the correct project
-    requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files)                          
+    requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files) 
+
+
+def deletesensordata(request, id):
+    sensordata = SensorData.objects.get(id=id)           
+    if request.method == 'POST':
+        # Send POST to delete a sensor
+        
+        sensordata.delete()
+        return redirect('sensordata:sensordatapage')
+    else:
+        # Go to delete confirmation page
+        return render(request, 'deleteconfirmation.html')             
