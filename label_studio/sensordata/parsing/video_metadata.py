@@ -32,7 +32,7 @@ class VideoMetaData:
         self.file_path = file_path
         self.video_framerate = parse_video_frame_rate(file_path)
         self.video_duration = parse_video_duration(file_path)
-        self.camera_name = parse_camera_name(file_path)
+        # self.camera_name = parse_camera_name(file_path)
         self.video_begin_time = parse_video_begin_time(file_path,sensor_timezone)
 
 
@@ -46,19 +46,15 @@ def parse_video_frame_rate(file_path):
     if not os.path.isfile(file_path):
         raise FileNotFoundException(file_path)
     
-    print(f'file_path: { file_path} ')
     # https://trac.ffmpeg.org/wiki/FFprobeTips
     args = 'ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of ' \
            'default=noprint_wrappers=1:nokey=1 "{}"'.format(file_path)
-    print(args)
-
     ffprobe_output = subprocess.check_output(args).decode('utf-8')
 
     numerator = ffprobe_output.split('/')[0]
     denominator = ffprobe_output.split('/')[1]
     frame_rate = float(numerator) / float(denominator)
     output = round(frame_rate, 2)
-
     return output
 
 
@@ -112,7 +108,7 @@ def parse_video_begin_time(file_path: Path, camera_timezone) -> datetime.datetim
     :param camera_timezone: The timezone that should be used
     :return: datetime: The begin UTC datetime of the video (without tzinfo)
     """
-    if file_path is None or not file_path.is_file():
+    if file_path is None: #or not file_path.is_file()
         raise FileNotFoundException(file_path)
 
     # List tags to obtain from videofile. Note that different cameras may use different tags
@@ -123,7 +119,7 @@ def parse_video_begin_time(file_path: Path, camera_timezone) -> datetime.datetim
           "-CreateDate -CreationDate -TrackCreateDate -MediaCreateDate -CreationDateValue -TimeStamp -SonyDateTime " \
           "-DateTime -GPSDateStamp -api largefilesupport=1"
     args = shlex.split(cmd)
-    args.append(file_path.as_posix())
+    args.append(file_path)
     # run the exiftool process, decode stdout into utf-8 & convert to JSON
     exiftool_output = subprocess.check_output(args).decode('utf-8')
     exiftool_output = json.loads(exiftool_output)
@@ -132,6 +128,7 @@ def parse_video_begin_time(file_path: Path, camera_timezone) -> datetime.datetim
         dt = exiftool_output[0].get(tag)
         if dt != '' and dt is not None:
             break
+
     # if dt == '' or dt is None:
     # TODO handle case where no start time for video was found
     # raise StartTimeNotFoundException
@@ -160,9 +157,9 @@ def parse_video_begin_time(file_path: Path, camera_timezone) -> datetime.datetim
         # raise StartTimeNotParsedException
         parsed_dt = datetime.datetime.now()
 
-    # Verify if naive_dt is really naive. THere are cases when the parsed time is not naive
+    # Verify if naive_dt is really naive. There are cases when the parsed time is not naive
     if parsed_dt.tzinfo is None:
-        ret = naive_to_utc(parsed_dt, camera_timezone)
+        ret = naive_to_utc(parsed_dt, camera_timezone) # change is made that it always localizes to UTC instead of to camera_timezone
     else:
         # return UTC time
         ret = parsed_dt.astimezone(pytz.utc).replace(tzinfo=None)

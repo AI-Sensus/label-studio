@@ -32,7 +32,9 @@ def addsensordata(request):
             name = sensordataform.cleaned_data['name']
             uploaded_file = sensordataform.cleaned_data['file']
             project_id = sensordataform.cleaned_data['project'].id
+            sensor = sensordataform.cleaned_data.get('sensor')
 
+            # Django typically stores files smaller than 5MB as a InMemoryUploadedInstance, if this is not the case create a NamedTemporaryFile object
             if isinstance(uploaded_file, InMemoryUploadedFile):
                 # Write the contents of the file to a temporary file on disk
                 file = NamedTemporaryFile(delete=False)
@@ -44,14 +46,16 @@ def addsensordata(request):
                 # If file is not InMemoryUploaded you can use temporary_file_path
                 file_path = uploaded_file.temporary_file_path()
 
-            sensor = sensordataform.cleaned_data.get('sensor')
+            
             # Retrieve sensortype
             sensortype = sensor.sensortype
+            # For every sensortype (IMU, Camera) there is a different parse and upload process
             match sensortype.sensortype:
                 # Parse and upload the data
                 case 'I':
                     parse_IMU(request=request, file_path=file_path,sensor_type_id=sensortype.id,name=name,project_id=project_id)
                 case 'C':
+                    # The temporary video file gets deleted before one can parse and upload, therefore the video is uploaded to the correct project at the start
                     # Get current user token for authentication
                     user = request.user
                     token = Token.objects.get(user=user)
@@ -62,17 +66,14 @@ def addsensordata(request):
                     files = {f'{request.FILES["file"]}': open(file_url, 'rb')}
                     # Import the video to the correct project
                     requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files)
-                    # Get file path of just uploaded video
+                    # Get directory path of just uploaded video
                     directory=os.path.join(settings.MEDIA_ROOT, settings.UPLOAD_DIR,str(project_id))
-
-
                     # Use a for loop to search for files that match the search string
                     for root, dirnames, filenames in os.walk(directory):
                         for filename in fnmatch.filter(filenames, f'*{os.path.basename(file_url)}*'):
+                            # Join the path of the directory with the correct filename
                             file_path = os.path.join(root, filename)
-                    
-                    
-                    print(file_path)
+
                     # Parse camera metadata and create SenorData object
                     parse_camera(request=request, file_path=file_path,sensor_type_id=sensortype.id,name=name,project_id=project_id)
                 case 'M':
@@ -90,7 +91,8 @@ def parse_IMU(request, file_path, sensor_type_id, name, project_id):
     sensor_data = SensorDataParser(project_controller, Path(file_path),sensortype.id)
     # Get parsed data
     sensor_df = sensor_data.get_data()
-    # Create a temporary file path to parse the pandas df to
+    # Now that the sensordata has been parsed it has to be transformed back to a .csv file and uploaded to the correct project
+    # Create NamedTemporary file of type csv
     with NamedTemporaryFile(suffix='.csv', prefix=('IMU_sensor_'+ str(name)) ,mode='w', delete=False) as csv_file:
         # Write the dataframe to the temporary file
         sensor_df.to_csv(csv_file.name, index=False)
@@ -125,6 +127,7 @@ def parse_IMU(request, file_path, sensor_type_id, name, project_id):
         
         # end_datetime = begin_datetime + end_time
 
+    # Create SensorData object with parsed data
     SensorData.objects.create(name=name, sensortype=sensortype,\
         begin_datetime=begin_datetime, end_datetime=end_datetime, project_id=project_id).save()
     
@@ -134,15 +137,15 @@ def parse_camera(request, file_path, sensor_type_id, name, project_id):
     sensor_timezone = sensortype.timezone
     # Parse video meta data
     videometadata = VideoMetaData(file_path=file_path,sensor_timezone=sensor_timezone)
-    # Upload video to correct project
-    upload_sensor_data(request=request, name=name, file_path=file_path ,project_id=project_id)
     
     # Use parsed data from metadata to create SensorData object
+    # Get the begin datetime and duration to determine the end datetime 
     begin_datetime = videometadata.video_begin_time
-    # Get video duration in seconds
-    video_duration = videometadata.video_duration
+    video_duration = videometadata.video_duration # in seconds
     delta = timedelta(seconds= float(video_duration))
     end_datetime =  begin_datetime + delta
+
+    # Create SensorData object with parsed data
     SensorData.objects.create(name=name, sensortype=sensortype,\
         begin_datetime=begin_datetime, end_datetime=end_datetime, project_id=project_id).save()
     
