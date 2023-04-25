@@ -74,10 +74,10 @@
             </tr>
             {% for senoffset in sensoroffset %}
                 <tr>
-                    <td>{{ senoffset.sensor1 }}</td>
-                    <td>{{ senoffset.sensor2 }}</td>
+                    <td>{{ senoffset.sensor_A }}</td>
+                    <td>{{ senoffset.sensor_B }}</td>
                     <td>{{ senoffset.offset }}</td> 
-                    <td>{{ senoffset.offsetDate}} </td>
+                    <td>{{ senoffset.offset_Date}} </td>
                 </tr> 
             {% endfor %}
         </table>

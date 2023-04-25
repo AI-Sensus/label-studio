@@ -77,10 +77,10 @@ def offset(request):
     if request.method == 'POST':
         sensoroffsetform = SensorOffsetForm(request.POST)
         if sensoroffsetform.is_valid():
-            sensorA = sensoroffsetform.cleaned_data['sensor_1']
-            sensorB = sensoroffsetform.cleaned_data['sensor_2']
+            sensorA = sensoroffsetform.cleaned_data['sensor_A']
+            sensorB = sensoroffsetform.cleaned_data['sensor_B']
             offset = sensoroffsetform.cleaned_data['offset']
-            offset_date = sensoroffsetform.cleaned_data['offset_date']
+            offset_date = sensoroffsetform.cleaned_data['offset_Date']
             # create and save the new SensorOffset instance
             sensoroffsetform.save()
             # redirect to the offset view and pass the sensoroffset queryset to the context
