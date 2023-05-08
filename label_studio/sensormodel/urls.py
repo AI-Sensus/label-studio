@@ -5,6 +5,7 @@ app_name = 'sensormodel'
 
 urlpatterns = [
     path('', views.tablepage, name= 'tablepage'),
+    
     path('add', views.add, name= 'add'),
     path('deployment', views.deployment, name='deployment'),
     path('sensor', views.sensor, name='sensor'),
