@@ -1,6 +1,6 @@
 {
-  "message": "fix: LOPS-25: Update grid images to not be cropped",
-  "commit": "02d31a7147ef16c72bc6df72c72e1e1fb424c889",
+  "message": "chore: LSDV-5060: Migrate to Yarn",
+  "commit": "ee15a82e9b90a75cda35dfb2d113db39f274997f",
   "branch": "master",
-  "date": "2023/03/06 08:00:29"
+  "date": "2023/05/11 17:58:11"
 }

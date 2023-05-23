@@ -1,6 +1,6 @@
 """This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
 """
-import json
+import ujson as json
 import uuid
 import logging
 import os
@@ -234,6 +234,14 @@ class Task(TaskMixin, models.Model):
             return filename.replace(settings.MEDIA_URL, '')
         return filename
 
+    def resolve_storage_uri(self, url, project):
+        if not self.storage:
+            storage_objects = project.get_all_storage_objects(type_='import')
+            self.storage = self._get_storage_by_url(url, storage_objects)
+
+        if self.storage:
+            return { "url": self.storage.generate_http_url(url), "presign_ttl": self.storage.presign_ttl }
+
     def resolve_uri(self, task_data, project):
         if project.task_data_login and project.task_data_password:
             protected_data = {}
@@ -273,7 +281,11 @@ class Task(TaskMixin, models.Model):
                 storage = self.storage or self._get_storage_by_url(task_data[field], storage_objects)
                 if storage:
                     try:
-                        resolved_uri = storage.resolve_uri(task_data[field])
+                        proxy_task = None
+                        if flag_set('fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short', user='auto'):
+                            proxy_task = self
+
+                        resolved_uri = storage.resolve_uri(task_data[field], proxy_task)
                     except Exception as exc:
                         logger.debug(exc, exc_info=True)
                         resolved_uri = None
@@ -290,6 +302,16 @@ class Task(TaskMixin, models.Model):
             # and 'can_resolve_url' will fail
             if isinstance(url, str) and storage_object.can_resolve_url(url):
                 return storage_object
+
+        # url is list or dict
+        if flag_set('fflag_feat_front_lsdv_4661_full_uri_resolve_15032023_short', user='auto'):
+            if isinstance(url, dict) or isinstance(url, list):
+                for storage_object in storage_objects:
+                    if storage_object.can_resolve_url(url):
+                        # note: only first found storage_object will be used for link resoling
+                        # probably we need to use more advanced can_resolve_url mechanics
+                        # that takes into account not only prefixes, but bucket path too
+                        return storage_object
 
     @property
     def storage(self):

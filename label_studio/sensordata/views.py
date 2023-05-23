@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from .forms import SensorDataForm
-from .models import SensorData
+from .forms import SensorDataForm, SensorOffsetForm
+from .models import SensorData, SensorOffset
 from .parsing.sensor_data import SensorDataParser
 from .parsing.video_metadata import VideoMetaData
 from .parsing.controllers.project_controller import ProjectController
@@ -63,6 +63,22 @@ def addsensordata(request):
         sensordataform = SensorDataForm()
         return render(request, 'addsensordata.html', {'sensordataform':sensordataform})
 
+def offset(request):
+    sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
+    if request.method == 'POST':
+        sensoroffsetform = SensorOffsetForm(request.POST)
+        if sensoroffsetform.is_valid():
+            sensorA = sensoroffsetform.cleaned_data['sensor_A']
+            sensorB = sensoroffsetform.cleaned_data['sensor_B']
+            offset = sensoroffsetform.cleaned_data['offset']
+            offset_date = sensoroffsetform.cleaned_data['offset_Date']
+            # create and save the new SensorOffset instance
+            sensoroffsetform.save()
+            # redirect to the offset view and pass the sensoroffset queryset to the context
+            return redirect('sensordata:offset')
+    else:
+        sensoroffsetform = SensorOffsetForm()
+    return render(request, 'offset.html', {'sensoroffsetform':sensoroffsetform, 'sensoroffset':sensoroffset})
 
 def parse_IMU(request, file_path, sensor_type_id, name, project_id):
     sensortype = SensorType.objects.get(id=sensor_type_id)
