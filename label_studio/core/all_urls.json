@@ -6,6 +6,18 @@
         "decorators": ""
     },
     {
+        "url": "/sw\\.js",
+        "module": "core.views.serve_file",
+        "name": "",
+        "decorators": ""
+    },
+    {
+        "url": "/sw-fallback\\.js",
+        "module": "core.views.serve_file",
+        "name": "",
+        "decorators": ""
+    },
+    {
         "url": "/favicon\\.ico",
         "module": "django.views.generic.base.RedirectView",
         "name": "",
@@ -156,6 +168,12 @@
         "decorators": ""
     },
     {
+        "url": "/api/projects/<int:pk>/imports/<int:import_pk>/",
+        "module": "projects.api.ProjectImportAPI",
+        "name": "projects:api:project-imports",
+        "decorators": ""
+    },
+    {
         "url": "/api/projects/<int:pk>/tasks/",
         "module": "projects.api.ProjectTaskListAPI",
         "name": "projects:api:project-tasks-list",
@@ -225,6 +243,12 @@
         "url": "/storage-data/uploaded/",
         "module": "data_import.api.DownloadStorageData",
         "name": "data_import:storage-data-upload",
+        "decorators": ""
+    },
+    {
+        "url": "/tasks/<int:task_id>/presign/",
+        "module": "data_import.api.PresignStorageData",
+        "name": "data_import:storage-data-presign",
         "decorators": ""
     },
     {
@@ -351,6 +375,12 @@
         "url": "/api/projects/<int:pk>/exports/<int:export_pk>/download",
         "module": "data_export.api.ExportDownloadAPI",
         "name": "data_export:api-projects:project-exports-download",
+        "decorators": ""
+    },
+    {
+        "url": "/api/projects/<int:pk>/exports/<int:export_pk>/convert",
+        "module": "data_export.api.ExportConvertAPI",
+        "name": "data_export:api-projects:project-exports-convert",
         "decorators": ""
     },
     {
@@ -564,7 +594,7 @@
         "decorators": ""
     },
     {
-        "url": "/api/storages/s3",
+        "url": "/api/storages/s3/",
         "module": "io_storages.s3.api.S3ImportStorageListAPI",
         "name": "storages:api:storage-s3-list",
         "decorators": ""
@@ -624,7 +654,7 @@
         "decorators": ""
     },
     {
-        "url": "/api/storages/azure",
+        "url": "/api/storages/azure/",
         "module": "io_storages.azure_blob.api.AzureBlobImportStorageListAPI",
         "name": "storages:api:storage-azure-list",
         "decorators": ""
@@ -684,7 +714,7 @@
         "decorators": ""
     },
     {
-        "url": "/api/storages/gcs",
+        "url": "/api/storages/gcs/",
         "module": "io_storages.gcs.api.GCSImportStorageListAPI",
         "name": "storages:api:storage-gcs-list",
         "decorators": ""
@@ -744,7 +774,7 @@
         "decorators": ""
     },
     {
-        "url": "/api/storages/redis",
+        "url": "/api/storages/redis/",
         "module": "io_storages.redis.api.RedisImportStorageListAPI",
         "name": "storages:api:storage-redis-list",
         "decorators": ""
@@ -804,7 +834,7 @@
         "decorators": ""
     },
     {
-        "url": "/api/storages/localfiles",
+        "url": "/api/storages/localfiles/",
         "module": "io_storages.localfiles.api.LocalFilesImportStorageListAPI",
         "name": "storages:api:storage-localfiles-list",
         "decorators": ""

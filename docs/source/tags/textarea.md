@@ -1,7 +1,7 @@
 ---
 title: TextArea
 type: tags
-order: 427
+order: 426
 meta_title: Textarea Tag for Text areas
 meta_description: Customize Label Studio with the TextArea tag to support audio transcription, image captioning, and OCR tasks for machine learning and data science projects.
 ---
@@ -21,6 +21,7 @@ Use with the following data types: audio, image, HTML, paragraphs, text, time se
 | [placeholder] | <code>string</code> |  | Placeholder text |
 | [maxSubmissions] | <code>string</code> |  | Maximum number of submissions |
 | [editable] | <code>boolean</code> | <code>false</code> | Whether to display an editable textarea |
+| [skipDuplicates] | <code>boolean</code> | <code>false</code> | Prevent duplicates in textarea inputs (see example below) |
 | [transcription] | <code>boolean</code> | <code>false</code> | If false, always show editor |
 | [rows] | <code>number</code> |  | Number of rows in the textarea |
 | [required] | <code>boolean</code> | <code>false</code> | Validate whether content in textarea is required |
@@ -50,5 +51,17 @@ You can combine the `TextArea` tag with other tags for OCR or other transcriptio
   </Labels>
   <Rectangle name="bbox" toName="image" strokeWidth="3"/>
   <TextArea name="transcription" toName="image" editable="true" perRegion="true" required="true" maxSubmissions="1" rows="5" placeholder="Recognized Text" displayMode="region-list"/>
+</View>
+```
+### Example
+
+You can keep submissions unique
+ - `fflag_feat_front_lsdv_4659_skipduplicates_060323_short` should be enabled to use `skipDuplicates` attribute.
+ - `fflag_feat_front_lsdv_4712_skipduplicates_editing_110423_short` should be enabled to keep submissions unique during editing existed results
+
+```html
+<View>
+  <Audio name="audio" value="$audio"/>
+  <TextArea name="genre" toName="audio" skipDuplicates="true" />
 </View>
 ```

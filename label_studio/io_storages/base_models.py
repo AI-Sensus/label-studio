@@ -4,8 +4,11 @@ import logging
 import django_rq
 import json
 
+from urllib.parse import urljoin, quote
+
 from django.utils import timezone
 from django.db import models, transaction
+from django.shortcuts import reverse
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django_rq import job
@@ -31,8 +34,6 @@ class Storage(models.Model):
 
     title = models.CharField(_('title'), null=True, blank=True, max_length=256, help_text='Cloud storage title')
     description = models.TextField(_('description'), null=True, blank=True, help_text='Cloud storage description')
-    project = models.ForeignKey('projects.Project', related_name='%(app_label)s_%(class)ss', on_delete=models.CASCADE,
-                                help_text='A unique integer value identifying this project.')
     created_at = models.DateTimeField(_('created at'), auto_now_add=True, help_text='Creation time')
     last_sync = models.DateTimeField(_('last sync'), null=True, blank=True, help_text='Last sync finished time')
     last_sync_count = models.PositiveIntegerField(
@@ -55,7 +56,6 @@ class Storage(models.Model):
 
 
 class ImportStorage(Storage):
-
     def iterkeys(self):
         return iter(())
 
@@ -74,12 +74,12 @@ class ImportStorage(Storage):
         # if not found any occurrences - this Storage can't resolve url
         return False
 
-    def resolve_uri(self, uri):
+    def resolve_uri(self, uri, task=None):
         #  list of objects
         if isinstance(uri, list):
             resolved = []
             for item in uri:
-                result = self.resolve_uri(item)
+                result = self.resolve_uri(item, task)
                 resolved.append(result if result else item)
             return resolved
 
@@ -87,7 +87,7 @@ class ImportStorage(Storage):
         elif isinstance(uri, dict):
             resolved = {}
             for key in uri.keys():
-                result = self.resolve_uri(uri[key])
+                result = self.resolve_uri(uri[key], task)
                 resolved[key] = result if result else uri[key]
             return resolved
 
@@ -99,19 +99,97 @@ class ImportStorage(Storage):
                 if not extracted_storage:
                     logger.debug(f'No storage info found for URI={uri}')
                     return
-                # resolve uri to url using storages
-                http_url = self.generate_http_url(extracted_uri)
+
+                if self.presign and task is not None:
+                    proxy_url = urljoin(settings.HOSTNAME, reverse("data_import:storage-data-presign", kwargs={ "task_id": task.id }) + f'?fileuri={quote(extracted_uri)}')
+                    return uri.replace(extracted_uri, proxy_url)
+                else:
+                    # resolve uri to url using storages
+                    http_url = self.generate_http_url(extracted_uri)
+
                 return uri.replace(extracted_uri, http_url)
             except Exception as exc:
                 logger.info(f'Can\'t resolve URI={uri}', exc_info=True)
 
+    def _scan_and_create_links_v2(self):
+        # Async job execution for batch of objects:
+        # e.g. GCS example
+        # | "GetKey" >>  --> read file content into label_studio_semantic_search.indexer.RawDataObject repr
+        # | "AggregateBatch" >> beam.Combine      --> combine read objects into a batch
+        # | "AddObjects" >> label_studio_semantic_search.indexer.add_objects_from_bucket --> add objects from batch to Vector DB
+        # or for project task creation last step would be
+        # | "AddObject" >> ImportStorage.add_task
+
+        raise NotImplementedError
+
+    @classmethod
+    def add_task(cls, data, project, maximum_annotations, max_inner_id, storage, key, link_class):
+        # predictions
+        predictions = data.get('predictions', [])
+        if predictions:
+            if 'data' not in data:
+                raise ValueError(
+                    'If you use "predictions" field in the task, ' 'you must put "data" field in the task too'
+                )
+
+        # annotations
+        annotations = data.get('annotations', [])
+        cancelled_annotations = 0
+        if annotations:
+            if 'data' not in data:
+                raise ValueError(
+                    'If you use "annotations" field in the task, ' 'you must put "data" field in the task too'
+                )
+            cancelled_annotations = len([a for a in annotations if a.get('was_cancelled', False)])
+
+        if 'data' in data and isinstance(data['data'], dict):
+            data = data['data']
+
+        with transaction.atomic():
+            task = Task.objects.create(
+                data=data, project=project, overlap=maximum_annotations,
+                is_labeled=len(annotations) >= maximum_annotations, total_predictions=len(predictions),
+                total_annotations=len(annotations) - cancelled_annotations,
+                cancelled_annotations=cancelled_annotations, inner_id=max_inner_id
+            )
+
+            link_class.create(task, key, storage)
+            logger.debug(f'Create {storage.__class__.__name__} link with key={key} for task={task}')
+
+            raise_exception = not flag_set('ff_fix_back_dev_3342_storage_scan_with_invalid_annotations',
+                                           user=AnonymousUser())
+
+            # add predictions
+            logger.debug(f'Create {len(predictions)} predictions for task={task}')
+            for prediction in predictions:
+                prediction['task'] = task.id
+            prediction_ser = PredictionSerializer(data=predictions, many=True)
+            if prediction_ser.is_valid(raise_exception=raise_exception):
+                prediction_ser.save()
+
+            # add annotations
+            logger.debug(f'Create {len(annotations)} annotations for task={task}')
+            for annotation in annotations:
+                annotation['task'] = task.id
+            annotation_ser = AnnotationSerializer(data=annotations, many=True)
+            if annotation_ser.is_valid(raise_exception=raise_exception):
+                annotation_ser.save()
+            # FIXME: add_annotation_history / post_process_annotations should be here
+
     def _scan_and_create_links(self, link_class):
+        """
+        TODO: deprecate this function and transform it to "pipeline" version  _scan_and_create_links_v2
+        """
         tasks_created = 0
         maximum_annotations = self.project.maximum_annotations
         task = self.project.tasks.order_by('-inner_id').first()
         max_inner_id = (task.inner_id + 1) if task else 1
-        
+
         for key in self.iterkeys():
+            # w/o Dataflow
+            # pubsub.push(topic, key)
+            # -> GF.pull(topic, key) + env -> add_task()
+
             logger.debug(f'Scanning key {key}')
 
             # skip if task already exists
@@ -130,59 +208,9 @@ class ImportStorage(Storage):
                     f'"Treat every bucket object as a source file"'
                 )
 
-            # predictions
-            predictions = data.get('predictions', [])
-            if predictions:
-                if 'data' not in data:
-                    raise ValueError(
-                        'If you use "predictions" field in the task, ' 'you must put "data" field in the task too'
-                    )
-
-            # annotations
-            annotations = data.get('annotations', [])
-            cancelled_annotations = 0
-            if annotations:
-                if 'data' not in data:
-                    raise ValueError(
-                        'If you use "annotations" field in the task, ' 'you must put "data" field in the task too'
-                    )
-                cancelled_annotations = len([a for a in annotations if a.get('was_cancelled', False)])
-
-            if 'data' in data and isinstance(data['data'], dict):
-                data = data['data']
-
-            with transaction.atomic():
-                task = Task.objects.create(
-                    data=data, project=self.project, overlap=maximum_annotations,
-                    is_labeled=len(annotations) >= maximum_annotations, total_predictions=len(predictions),
-                    total_annotations=len(annotations)-cancelled_annotations,
-                    cancelled_annotations=cancelled_annotations, inner_id=max_inner_id
-                )
-                max_inner_id += 1
-
-                link_class.create(task, key, self)
-                logger.debug(f'Create {self.__class__.__name__} link with key={key} for task={task}')
-                tasks_created += 1
-
-                raise_exception = not flag_set('ff_fix_back_dev_3342_storage_scan_with_invalid_annotations', user=AnonymousUser())
-
-                # add predictions
-                logger.debug(f'Create {len(predictions)} predictions for task={task}')
-                for prediction in predictions:
-                    prediction['task'] = task.id
-                prediction_ser = PredictionSerializer(data=predictions, many=True)
-                if prediction_ser.is_valid(raise_exception=raise_exception):
-                    prediction_ser.save()
-
-                # add annotations
-                logger.debug(f'Create {len(annotations)} annotations for task={task}')
-                for annotation in annotations:
-                    annotation['task'] = task.id
-                annotation_ser = AnnotationSerializer(data=annotations, many=True)
-                if annotation_ser.is_valid(raise_exception=raise_exception):
-                    annotation_ser.save()
-
-                # FIXME: add_annotation_history / post_process_annotations should be here
+            self.add_task(data, self.project, maximum_annotations, max_inner_id, self, key, link_class)
+            max_inner_id += 1
+            tasks_created += 1
 
         self.last_sync = timezone.now()
         self.last_sync_count = tasks_created
@@ -218,13 +246,31 @@ class ImportStorage(Storage):
         abstract = True
 
 
+class ProjectStorageMixin(models.Model):
+    project = models.ForeignKey(
+        'projects.Project',
+        related_name='%(app_label)s_%(class)ss',
+        on_delete=models.CASCADE,
+        help_text='A unique integer value identifying this project.'
+    )
+
+    def has_permission(self, user):
+        user.project = self.project  # link for activity log
+        if self.project.has_permission(user):
+            return True
+        return False
+
+    class Meta:
+        abstract = True
+
+
 @job('low')
 def sync_background(storage_class, storage_id, **kwargs):
     storage = storage_class.objects.get(id=storage_id)
     storage.scan_and_create_links()
 
 
-class ExportStorage(Storage):
+class ExportStorage(Storage, ProjectStorageMixin):
     can_delete_objects = models.BooleanField(_('can_delete_objects'), null=True, blank=True, help_text='Deletion from storage enabled')
 
     def _get_serialized_data(self, annotation):
@@ -285,12 +331,6 @@ class ImportStorageLink(models.Model):
     def create(cls, task, key, storage):
         link, created = cls.objects.get_or_create(task_id=task.id, key=key, storage=storage, object_exists=True)
         return link
-
-    def has_permission(self, user):
-        user.project = self.task.project  # link for activity log
-        if self.task.has_permission(user):
-            return True
-        return False
 
     class Meta:
         abstract = True

@@ -422,7 +422,7 @@ def collect_versions(force=False):
             'current_version_is_outdated': label_studio.__current_version_is_outdated__
         },
         # backend full git info
-        'label-studio-os-backend': version.get_git_commit_info()
+        'label-studio-os-backend': version.get_git_commit_info(ls=True)
     }
 
     # label studio frontend
@@ -665,3 +665,13 @@ def btree_gin_migration_operations(next_step):
         ops = []
 
     return ops
+
+
+def timeit(func):
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        logging.debug(f"{func.__name__} execution time: {end-start} seconds")
+        return result
+    return wrapper
