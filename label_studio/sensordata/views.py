@@ -89,6 +89,28 @@ def offset(request):
         sensoroffsetform = SensorOffsetForm()
     return render(request, 'offset.html', {'sensoroffsetform':sensoroffsetform, 'sensoroffset':sensoroffset})
 
+def delete_offset(request, id):
+    offset = SensorOffset.objects.get(id=id)
+    if request.method == 'POST':
+        # Send POST to delete a sensor
+        offset.delete()
+        return redirect('sensordata:offset')
+    else:
+        # Go to delete confirmation page
+        return render(request, 'deleteOffset.html')
+
+def adjust_offset(request, id):
+    offset = SensorOffset.objects.get(id=id)
+    if request.method == 'POST':
+        # Send POST to adjust a subject
+        offsetform = SensorOffsetForm(request.POST, instance=offset)
+        if offsetform.is_valid():
+            offsetform.save()
+            return redirect('sensordata:offset')
+    else:
+        # Go to subject adjustment page
+        offsetform = SensorOffsetForm(instance=offset)
+    return render(request, 'editOffset.html', {'offsetform':offsetform})
 
 def parse_sensor(request, file_path, sensor_model_id):
     project_controller = ProjectController()
