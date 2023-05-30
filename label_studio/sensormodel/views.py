@@ -8,49 +8,6 @@ import yaml
 from yaml.loader import SafeLoader
 import json
 
-def tablepage(request):
-    # Get all objects
-    sensors = Sensor.objects.all().order_by('sensor_id')
-    subjects = Subject.objects.all().order_by('name')
-    deployments = Deployment.objects.all().order_by('begin_datetime')
-    sensortypes = SensorType.objects.all().order_by('manufacturer')
-
-    for deployment in deployments:
-        # For each deployment create lists of all its sensors and subjects for easier display
-        deployment.CreateLists()
-    return render(request, 'tablepage.html', {'sensors': sensors, 'subjects': subjects, 'deployments': deployments, 'sensortypes': sensortypes})
-
-def addDeployment(request):
-    if request.method == 'POST':
-        deploymentform = forms.DeploymentForm(request.POST)
-        if deploymentform.is_valid():
-            deploymentform.save()
-            return redirect('sensormodel:tablepage')
-    else:
-        deploymentform = forms.DeploymentForm(request.POST)
-    return render(request, 'addDeployment.html', {'deploymentform':deploymentform})
-
-def addSensor(request):
-    if request.method == 'POST':
-        sensorform = forms.SensorForm(request.POST)
-        if sensorform.is_valid():
-            sensorform.save()
-            return redirect('sensormodel:sensor')
-    else:
-        sensorform = forms.SensorForm(request.POST)
-    return render(request, 'addSensor.html', {'sensorform':sensorform})
-
-def addSubject(request):
-    if request.method == 'POST':
-        subjectform = forms.SubjectForm(request.POST)
-        if subjectform.is_valid():
-            subjectform.save()
-            return redirect('sensormodel:subject')
-    else:
-        subjectform = forms.SubjectForm(request.POST)
-        deploymentform = forms.DeploymentForm(request.POST)
-    return render(request, 'addSubject.html', {'sensorform':sensorform, 'subjectform':subjectform, 'deploymentform':deploymentform})
-
 def deployment(request):
     deployments = Deployment.objects.all().order_by('begin_datetime')
     for deployment in deployments:
@@ -93,13 +50,13 @@ def adjust_deployment(request, id):
     deployment = Deployment.objects.get(id=id)
     if request.method == 'POST':
         # Send POST to adjust a deployment
-        deploymentform = forms.DeploymentForm(request.POST, instance=deployment)
+        deploymentform = forms.DeploymentForm2(request.POST, instance=deployment)
         if deploymentform.is_valid():
             deploymentform.save()
             return redirect('sensormodel:deployment')
     else:
         # Go to deployment adjustment page
-        deploymentform = forms.DeploymentForm(instance=deployment)
+        deploymentform = forms.DeploymentForm2(instance=deployment)
     return render(request, 'deployment.html', {'deploymentform':deploymentform})
     
 def adjust_sensor(request, id):
