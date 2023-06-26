@@ -16,6 +16,7 @@ from tempfile import NamedTemporaryFile
 from django.conf import settings
 import os
 import fnmatch
+import zipfile
 
 UNITS = {'days': 86400, 'hours': 3600, 'minutes': 60, 'seconds':1, 'milliseconds':0.001}
 
@@ -24,8 +25,10 @@ def sensordatapage(request):
     sensordata = SensorData.objects.all().order_by('project_id')
     return render(request, 'sensordatapage.html', {'sensordata':sensordata})
 
+import zipfile
+
 def addsensordata(request):
-    if request.method =='POST':
+    if request.method == 'POST':
         sensordataform = SensorDataForm(request.POST, request.FILES)
         if sensordataform.is_valid():
             # Get form data
@@ -34,36 +37,53 @@ def addsensordata(request):
             project_id = sensordataform.cleaned_data['project'].id
             sensor = sensordataform.cleaned_data.get('sensor')
 
-            # Django typically stores files smaller than 5MB as a InMemoryUploadedInstance, if this is not the case create a NamedTemporaryFile object
-            if isinstance(uploaded_file, InMemoryUploadedFile):
-                # Write the contents of the file to a temporary file on disk
-                file = NamedTemporaryFile(delete=False)
-                file.write(uploaded_file.read())
-                file.close()
-                # Access file path of newly created file
-                file_path = file.name
+            # Django typically stores files smaller than 5MB as an InMemoryUploadedInstance.
+            # If the uploaded file is a zip file, extract and process the files inside.
+            if uploaded_file.content_type == 'application/zip':
+                with zipfile.ZipFile(uploaded_file, 'r') as zip_ref:
+                    for file_name in zip_ref.namelist():
+                        # Extract each file from the zip to a temporary location
+                        temp_file_path = zip_ref.extract(file_name)
+                        # Process the individual file
+                        process_sensor_file(request, temp_file_path, sensor, name, project_id)
+                        # Delete the temporary file
+                        os.remove(temp_file_path)
             else:
-                # If file is not InMemoryUploaded you can use temporary_file_path
-                file_path = uploaded_file.temporary_file_path()
+                # If the file is not a zip file, process it as before
+                file_path = handle_uploaded_file(uploaded_file)
+                process_sensor_file(request, file_path, sensor, name, project_id)
 
-            # Process zip file !!!
-            
-
-            # Retrieve sensortype
-            sensortype = sensor.sensortype
-            # For every sensortype (IMU, Camera) there is a different parse and upload process
-            match sensortype.sensortype:
-                # Parse and upload the data
-                case 'I':
-                    parse_IMU(request=request, file_path=file_path,sensor_type_id=sensortype.id,name=name,project_id=project_id)
-                case 'C':
-                    parse_camera(request=request, file_path=file_path,sensor_type_id=sensortype.id,name=name,project_id=project_id)
-                case 'M':
-                    pass
-        return redirect('sensordata:sensordatapage')
+            return redirect('sensordata:sensordatapage')
     else:
         sensordataform = SensorDataForm()
-        return render(request, 'addsensordata.html', {'sensordataform':sensordataform})
+    return render(request, 'addsensordata.html', {'sensordataform': sensordataform})
+
+def process_sensor_file(request, file_path, sensor, name, project_id):
+    # Process the sensor file based on its type
+    sensortype = sensor.sensortype
+    if sensortype.sensortype == 'I':  # IMU sensor type
+        parse_IMU(request, file_path, sensortype.id, name, project_id)
+    elif sensortype.sensortype == 'C':  # Camera sensor type
+        parse_camera(request, file_path, sensortype.id, name, project_id)
+    elif sensortype.sensortype == 'M':  # Other sensor type (add handling logic here)
+        pass
+    # Add handling for other sensor types as needed
+
+def handle_uploaded_file(uploaded_file):
+    # Handle the uploaded file and return the file path
+    if isinstance(uploaded_file, InMemoryUploadedFile):
+        # Write the contents of the file to a temporary file on disk
+        file = NamedTemporaryFile(delete=False)
+        file.write(uploaded_file.read())
+        file.close()
+        # Access file path of the newly created file
+        file_path = file.name
+    else:
+        # If the file is not InMemoryUploaded, use temporary_file_path
+        file_path = uploaded_file.temporary_file_path()
+
+    return file_path
+
 
 def parse_IMU(request, file_path, sensor_type_id, name, project_id):
     sensortype = SensorType.objects.get(id=sensor_type_id)
