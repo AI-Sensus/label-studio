@@ -69,7 +69,7 @@ def sensor(request):
     sensors = Sensor.objects.all().order_by('sensor_id')
     sensortypes = SensorType.objects.all().order_by('manufacturer')
     if request.method =='POST':
-        sensorform = forms.SensorForm(request.POST)
+        sensorform = forms.SensorForm(request.POST) 
         if sensorform.is_valid():
             sensorform.save()
             return redirect('sensormodel:sensor')
@@ -96,7 +96,7 @@ def adjust_deployment(request, id):
         deploymentform = forms.DeploymentForm(request.POST, instance=deployment)
         if deploymentform.is_valid():
             deploymentform.save()
-            return redirect('sensormodel:tablepage')
+            return redirect('sensormodel:deployment')
     else:
         # Go to deployment adjustment page
         deploymentform = forms.DeploymentForm(instance=deployment)
@@ -109,7 +109,7 @@ def adjust_sensor(request, id):
         sensorform = forms.SensorForm(request.POST,instance=sensor)
         if sensorform.is_valid():
             sensorform.save()
-            return redirect('sensormodel:tablepage')
+            return redirect('sensormodel:sensor')
     else:
         # Go to sensor adjustment page
         sensorform = forms.SensorForm(instance=sensor)
@@ -123,7 +123,7 @@ def adjust_subject(request, id):
         subjectform = forms.SubjectForm(request.POST, instance=subject)
         if subjectform.is_valid():
             subjectform.save()
-            return redirect('sensormodel:tablepage')
+            return redirect('sensormodel:subject')
     else:
         # Go to subject adjustment page
         subjectform = forms.SubjectForm(instance=subject)
@@ -193,6 +193,6 @@ def sync_sensor_parser_templates(request):
                     # If the config is valid add to DB
                     config = json.loads(config)
                     SensorType.objects.create(manufacturer=manufacturer,name=name, version=version, **config).save()
-    return redirect('sensormodel:tablepage')
+    return redirect('sensormodel:sensor')
 
 
