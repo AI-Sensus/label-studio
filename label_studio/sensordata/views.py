@@ -17,6 +17,7 @@ from django.conf import settings
 import os
 import fnmatch
 import zipfile
+from django.http import HttpResponseBadRequest
 
 UNITS = {'days': 86400, 'hours': 3600, 'minutes': 60, 'seconds':1, 'milliseconds':0.001}
 
@@ -31,15 +32,15 @@ def addsensordata(request):
     if request.method == 'POST':
         sensordataform = SensorDataForm(request.POST, request.FILES)
         if sensordataform.is_valid():
-            # Get form data
+             # Get form data
             name = sensordataform.cleaned_data['name']
             uploaded_file = sensordataform.cleaned_data['file']
             project_id = sensordataform.cleaned_data['project'].id
             sensor = sensordataform.cleaned_data.get('sensor')
 
-            # Django typically stores files smaller than 5MB as an InMemoryUploadedInstance.
-            # If the uploaded file is a zip file, extract and process the files inside.
-            if uploaded_file.content_type == 'application/zip':
+            # Check if the uploaded file is a zip file
+            if zipfile.is_zipfile(uploaded_file):
+                # Process the zip file
                 with zipfile.ZipFile(uploaded_file, 'r') as zip_ref:
                     for file_name in zip_ref.namelist():
                         # Extract each file from the zip to a temporary location
@@ -48,14 +49,15 @@ def addsensordata(request):
                         process_sensor_file(request, temp_file_path, sensor, name, project_id)
                         # Delete the temporary file
                         os.remove(temp_file_path)
-            else:
-                # If the file is not a zip file, process it as before
-                file_path = handle_uploaded_file(uploaded_file)
-                process_sensor_file(request, file_path, sensor, name, project_id)
-
-            return redirect('sensordata:sensordatapage')
+                
+                return redirect('sensordata:sensordatapage')
+            
+            # Raise an exception if the uploaded file is not a zip file
+            raise ValueError("Uploaded file must be a zip file.")
+    
     else:
         sensordataform = SensorDataForm()
+    
     return render(request, 'addsensordata.html', {'sensordataform': sensordataform})
 
 def process_sensor_file(request, file_path, sensor, name, project_id):
