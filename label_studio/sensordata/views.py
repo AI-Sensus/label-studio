@@ -15,6 +15,8 @@ import requests
 from tempfile import NamedTemporaryFile
 from django.conf import settings
 import os
+import io
+import csv
 import fnmatch
 import zipfile
 from django.http import HttpResponseBadRequest
@@ -26,13 +28,11 @@ def sensordatapage(request):
     sensordata = SensorData.objects.all().order_by('project_id')
     return render(request, 'sensordatapage.html', {'sensordata':sensordata})
 
-import zipfile
-
 def addsensordata(request):
     if request.method == 'POST':
         sensordataform = SensorDataForm(request.POST, request.FILES)
         if sensordataform.is_valid():
-             # Get form data
+            # Get form data
             name = sensordataform.cleaned_data['name']
             uploaded_file = sensordataform.cleaned_data['file']
             project_id = sensordataform.cleaned_data['project'].id
@@ -43,21 +43,22 @@ def addsensordata(request):
                 # Process the zip file
                 with zipfile.ZipFile(uploaded_file, 'r') as zip_ref:
                     for file_name in zip_ref.namelist():
-                        # Extract each file from the zip to a temporary location
-                        temp_file_path = zip_ref.extract(file_name)
-                        # Process the individual file
-                        process_sensor_file(request, temp_file_path, sensor, name, project_id)
-                        # Delete the temporary file
-                        os.remove(temp_file_path)
+                        if file_name.lower().endswith('.csv'):  # Check if the file is a CSV file
+                            # Extract each file from the zip to a temporary location
+                            temp_file_path = zip_ref.extract(file_name)
+                            # Process the individual file
+                            process_sensor_file(request, temp_file_path, sensor, name, project_id)
+                            # Delete the temporary file
+                            os.remove(temp_file_path)
                 
                 return redirect('sensordata:sensordatapage')
-            
+
             # Raise an exception if the uploaded file is not a zip file
             raise ValueError("Uploaded file must be a zip file.")
-    
+
     else:
         sensordataform = SensorDataForm()
-    
+
     return render(request, 'addsensordata.html', {'sensordataform': sensordataform})
 
 def process_sensor_file(request, file_path, sensor, name, project_id):
