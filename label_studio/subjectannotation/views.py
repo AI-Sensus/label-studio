@@ -4,6 +4,7 @@ from .forms import SubjectAnnotationForm
 from .utils.annotationtemplate import createSubjectAnnotationTemplate
 import requests
 from rest_framework.authtoken.models import Token
+from .models import Subject
 
 # Create your views here.
 def annotationtaskpage(request):
@@ -15,10 +16,15 @@ def createannotationtask(request):
     if request.method == 'POST':
         subjectannotationform = SubjectAnnotationForm(request.POST, request.FILES)
         if subjectannotationform.is_valid():
-            ## Create project
-            deployment = subjectannotationform.cleaned_data.get("deployment")
-            deployment.CreateLists()
-            sensorlist, subjectlist = deployment.sensorlist, deployment.subjectlist
+            ## Select dataimport version of project
+            project = subjectannotationform.cleaned_data.get("project")
+            
+            # Retrieve the subject list
+            subjects = Subject.objects.all()
+            
+            # Create labels for subject annotation
+            labels = [f"Subject: {subject.name}" for subject in subjects]
+
             # Create a XML markup for annotating
             template = createSubjectAnnotationTemplate(subjectlist)
             title = str(deployment)
