@@ -1,8 +1,7 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
 from django.urls import reverse
 import requests
-from . forms import CreateProject
+from .forms import CreateProject
 from rest_framework.authtoken.models import Token
 
 def landingpage(request):
@@ -13,8 +12,6 @@ def createProject(request):
         createprojectform = CreateProject(request.POST)
         if createprojectform.is_valid():
             name = createprojectform.cleaned_data['project_name']
-            #description = createprojectform.cleaned_data['optional_description']
-            
             # Get current user token for authentication
             user = request.user
             token = Token.objects.get(user=user)
@@ -24,12 +21,32 @@ def createProject(request):
 
             ### Create three projects from here
             # Create data import project
-            #requests.post(projects_url, headers={'Authorization': f'Token {token}'}, data={'title':})
-            
+            dataimport_title = f'{name}_dataimport'
+            dataimport_response = requests.post(
+                projects_url,
+                headers={'Authorization': f'Token {token}'},
+                data={'title': dataimport_title}
+            )
 
-        return redirect('landingpage:landingpage')
-    
+            # Create subject annotation project
+            subjectannotation_title = f'{name}_subjectannotation'
+            subjectannotation_response = requests.post(
+                projects_url,
+                headers={'Authorization': f'Token {token}'},
+                data={'title': subjectannotation_title}
+            )
+
+            # Create activity annotation project
+            activityannotation_title = f'{name}_activityannotation'
+            activityannotation_response = requests.post(
+                projects_url,
+                headers={'Authorization': f'Token {token}'},
+                data={'title': activityannotation_title}
+            )
+
+            return redirect('landingpage:landingpage')
+
     else:
-        createprojectform = CreateProject(request.POST)
+        createprojectform = CreateProject()
     
-    return render(request, 'createproject.html', {'createprojectform':createprojectform})
+    return render(request, 'createproject.html', {'createprojectform': createprojectform})
