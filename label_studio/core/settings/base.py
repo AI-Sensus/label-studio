@@ -209,7 +209,8 @@ INSTALLED_APPS = [
     'sensormodel',
     'subjectannotation',
     'sensordata',
-    'landingpage'
+    'landingpage',
+    'taskgeneration',
 ]
 
 MIDDLEWARE = [
