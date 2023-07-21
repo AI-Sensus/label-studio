@@ -14,8 +14,13 @@ import { VersionNotifier, VersionProvider } from '../VersionNotifier/VersionNoti
 import './Menubar.styl';
 import './MenuContent.styl';
 import './MenuSidebar.styl';
+import React from 'react';
 
 export const MenubarContext = createContext();
+
+const handleLandingpageItemClick = () => {
+  window.location.href = '/landingpage';
+};
 
 const LeftContextMenu = ({className}) => (
   <StaticContent
@@ -201,31 +206,11 @@ export const Menubar = ({
                 />
                 <Menu.Item
                   label="Landingpage"
-                  to="/landingpage/"
+                  to="/landingpage"
                   icon={<IconBook/>}
                   data-external
                   exact
-                />
-                <Menu.Item
-                  label="Sensor Model"
-                  to="/sensormodel/"
-                  icon={<IconBook/>}
-                  data-external
-                  exact
-                />
-                <Menu.Item
-                  label="Sensor Data"
-                  to="/sensordata/"
-                  icon={<IconBook/>}
-                  data-external
-                  exact
-                />
-                <Menu.Item
-                  label="Subject Annotation"
-                  to="/subjectannotation/"
-                  icon={<IconBook/>}
-                  data-external
-                  exact
+                  onClick={handleLandingpageItemClick}
                 />
 
                 <Menu.Spacer/>

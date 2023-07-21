@@ -4,11 +4,11 @@ from . import views
 app_name = 'sensormodel'
 
 urlpatterns = [
-    path('', views.tablepage, name= 'tablepage'),
     
     path('deployment', views.deployment, name='deployment'),
     path('sensor', views.sensor, name='sensor'),
     path('subject', views.subject, name='subject'),
+
     
     path('sync', views.sync_sensor_parser_templates, name= 'sync'),
 
