@@ -10,6 +10,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 import json
 from datetime import timedelta
 from sensormodel.models import SensorType
+from data_import.models import FileUpload
 from rest_framework.authtoken.models import Token
 import requests
 from tempfile import NamedTemporaryFile
@@ -51,9 +52,16 @@ def addsensordata(request):
             match sensortype.sensortype:
                 # Parse and upload the data
                 case 'I':
-                    parse_IMU(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
+                    sensordata = parse_IMU(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
+                    fileupload = FileUpload.objects.filter(file__contains=uploaded_file.name).last()
+                    sensordata.fileupload = fileupload
+                    sensordata.save()
+
                 case 'C':
-                    parse_camera(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
+                    sensordata = parse_camera(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
+                    fileupload = FileUpload.objects.filter(file__contains=uploaded_file.name).last()
+                    sensordata.fileupload = fileupload
+                    sensordata.save()
                 case 'M':
                     pass
         return redirect('sensordata:sensordatapage')
@@ -101,11 +109,11 @@ def adjust_offset(request, id):
     return render(request, 'editOffset.html', {'offsetform':offsetform})
 
 def parse_IMU(request, file_path, sensor, name, project):
-    sensortype = SensorType.objects.get(id=sensor.sensortype)
+    sensortype = SensorType.objects.get(id=sensor.sensortype.id)
     # Parse data
 
     project_controller = ProjectController()
-    sensor_data = SensorDataParser(project_controller, Path(file_path),sensortype.id)
+    sensor_data = SensorDataParser(project_controller=project_controller, file_path=Path(file_path),sensor_model_id= sensortype.id)
     # Get parsed data
     sensor_df = sensor_data.get_data()
     # Now that the sensordata has been parsed it has to be transformed back to a .csv file and uploaded to the correct project
@@ -117,7 +125,7 @@ def parse_IMU(request, file_path, sensor, name, project):
 
     # Upload parsed sensor(IMU) data to corresponding project
     upload_sensor_data(request=request, name=name, file_path=file_path ,project=project)
- 
+    
     # Parse to JSON to get begin and end datetime   
     sensor_data_json_string = sensor_df.to_json()
     sensor_data_json = json.loads(sensor_data_json_string)
@@ -145,8 +153,10 @@ def parse_IMU(request, file_path, sensor, name, project):
         # end_datetime = begin_datetime + end_time
 
     # Create SensorData object with parsed data
-    SensorData.objects.create(name=name, sensor=sensor,\
-        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project).save()
+    sensordata = SensorData.objects.create(name=name, sensor=sensor,\
+        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project)
+    
+    return sensordata
     
 
 
@@ -167,8 +177,10 @@ def parse_camera(request, file_path, sensor, name, project):
     end_datetime =  begin_datetime + delta
 
     # Create SensorData object with parsed data
-    SensorData.objects.create(name=name, sensor=sensor,\
-        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project).save()
+    sensordata = SensorData.objects.create(name=name, sensor=sensor,\
+        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project)
+    
+    return sensordata
     
 def upload_sensor_data(request, name, file_path, project):
     user = request.user
@@ -178,7 +190,11 @@ def upload_sensor_data(request, name, file_path, project):
     # Get temporary file URL from the form
     files = {f'{name}': open(file_path, 'rb')}
     # Import the video to the correct project
-    requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files) 
+    import_req = requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files)
+    import_req.content
+    print(import_req.content)
+    import_req.text
+    print(import_req.text)
 
 
 def deletesensordata(request, id):
