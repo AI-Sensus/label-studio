@@ -164,7 +164,7 @@ def parse_camera(request, file_path, sensor, name, project):
     # Upload video to project
     upload_sensor_data(request=request, name=name, file_path=file_path ,project=project)
     # Get sensortype config
-    sensortype = SensorType.objects.get(id=sensor.sensortype)
+    sensortype = SensorType.objects.get(id=sensor.sensortype.id)
     sensor_timezone = sensortype.timezone
     # Parse video meta data
     videometadata = VideoMetaData(file_path=file_path,sensor_timezone=sensor_timezone)
@@ -186,7 +186,7 @@ def upload_sensor_data(request, name, file_path, project):
     user = request.user
     token = Token.objects.get(user=user)
     # Get url for importing data to the correct project
-    import_url = request.build_absolute_uri(reverse('data_import:api-projects:project-import',kwargs={'pk':project}))
+    import_url = request.build_absolute_uri(reverse('data_import:api-projects:project-import',kwargs={'pk':project.id}))
     # Get temporary file URL from the form
     files = {f'{name}': open(file_path, 'rb')}
     # Import the video to the correct project

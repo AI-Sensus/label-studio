@@ -74,8 +74,8 @@
                 <td>{{ sendata.name }}</td>
                 <td>{{ sendata.begin_datetime }}</td>
                 <td>{{ sendata.end_datetime }}</td> 
-                <td>{{ sendata.project_id}} </td>
-                <td>{{ sendata.sensortype}} </td>
+                <td>{{ sendata.project}} </td>
+                <td>{{ sendata.sensor}} </td>
                 <td><a href="{% url 'sensordata:delete' sendata.id %}">[Delete]</a></td>
             </tr> 
             {% endfor %} 
