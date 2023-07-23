@@ -4,7 +4,7 @@ from sensormodel.models import Subject
 from sensordata.models import SensorData
 
 
-class TaskPair(models.Model):
+class VideoImuOverlap(models.Model):
     video = models.ForeignKey(SensorData, on_delete=models.CASCADE, null=True,related_name='video')
     imu = models.ForeignKey(SensorData, on_delete=models.CASCADE, null=True,related_name='imu')
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)

@@ -7,7 +7,7 @@ from datetime import timedelta
 from sensormodel.models import Deployment
 from sensordata.models import SensorData, SensorOffset
 from subjectannotation.models import SubjectPresence
-from taskgeneration.models import TaskPair
+from taskgeneration.models import VideoImuOverlap
 from taskgeneration.forms import TaskGenerationForm
 
 
@@ -30,12 +30,11 @@ def create_task_pairs(request, project, subject, duration):
         # Iterate over all subject_presences for this video
         subject_presences_video = subject_presences.filter(file_upload=video.file_upload)
         for subj_pres in subject_presences_video:
-            b = b_dt + timedelta(seconds=subj_pres.start_time) #begin_datetime of annotation
-            e = e_dt + timedelta(seconds=subj_pres.end_time) #end_datetime of annotation
-            imu_overlap_list = []
+            b = b_dt + timedelta(seconds=subj_pres.start_time) #begin_datetime of subj. pres. annotation
+            e = e_dt + timedelta(seconds=subj_pres.end_time) #end_datetime of subj. pres. annotation
             # Iterate over imu sensordata of imu's that have been deployed with subject
-            for imu in imu_sensordata:
-                imu_sensor = imu.sensor
+            for imu_sens_dat in imu_sensordata:
+                imu_sensor = imu_sens_dat.sensor
                 camera_sensor = video.sensor
                 # Check if there is an offset between camera and IMU
                 if SensorOffset.objects.filter(sensor_A=camera_sensor,sensor_B=imu_sensor):
@@ -46,23 +45,35 @@ def create_task_pairs(request, project, subject, duration):
                     # If there is no SensorOffset defined set offset=0
                     offset = 0
                 offset_delta = timedelta(milliseconds=offset) # Difference in datetime because of sensor offset
-                # Check if there is any overlap whatsoever
+                # Check if either the begin or end of imu are in the subj. pres. segment or the begin (of imu) is before and the end (of imu) is after the start of subj. pres.
                 begin_inside = Q(begin_datetime__range=(b-offset_delta,e-offset_delta))
                 end_inside = Q(end_datetime__range=(b-offset_delta,e-offset_delta))
                 begin_out_and_end_over = ~Q(begin_datetime__range=(b-offset_delta,e-offset_delta)) & Q(end_datetime__gte=b-offset_delta)
-                # if begin_inside:
-                #     start_overlap = begin_datetime-offset_delta
-                #     if end_inside:
-                #         end_overlap = 
-                            
                 if imu_sensordata.filter(Q(sensor=imu_sensor) & begin_inside|end_inside|begin_out_and_end_over):
-                    imu_overlap_list.append(imu)
-            # for imu in imu_overlap:
-                
-
-            # choose imu sensordata for task (longest overlap)
-            # (end-start)//duration = nr of segments
-            # create TaskPairs
+                    # Find the start and end datetime of overlap
+                    if b >= imu_sens_dat.begin_datetime+offset_delta:
+                        begin_overlap_dt = b
+                    else:
+                        begin_overlap_dt = imu_sens_dat.begin_datetime+offset_delta
+                    if e <= imu_sens_dat.end_datetime+offset_delta:
+                        end_overlap_dt = e
+                    else:
+                        end_overlap_dt = imu_sens_dat.end_datetime+offset_delta    
+                    # Determine amount of segments that fit inside overlap
+                    amount_of_segments = (end_overlap_dt - begin_overlap_dt)//duration
+                    for segment in range(amount_of_segments):
+                        begin_segment_dt = begin_overlap_dt + timedelta(seconds= duration*segment)
+                        end_segment_dt = begin_segment_dt + timedelta(seconds= duration)
+                    # Create overlap object for each segment, this is used to create tasks
+                    VideoImuOverlap.objects.create(video=video,
+                                                    imu=imu_sensor,
+                                                    project=project,
+                                                    subject=subject,
+                                                    start_video= (begin_segment_dt-b).total_seconds(),
+                                                    end_video = (end_segment_dt-b).total_seconds(),
+                                                    start_imu = (begin_segment_dt-imu_sens_dat.begin_datetime).total_seconds(),
+                                                    end_imu = (end_segment_dt-imu_sens_dat.begin_datetime).total_seconds()
+                                                   )
                 
                 
 
@@ -79,20 +90,21 @@ def create_annotation_data_chunks(request):
 def parse_data_to_task(request):
     pass
 
-def generate_activity_tasks(request, project, subject, duration):
+def generate_activity_tasks(request):
     if request.method == 'POST':
         taskgenerationform = TaskGenerationForm(request.POST)
         if taskgenerationform.is_valid():
             # Get data from Form
             project = taskgenerationform.cleaned_data.get("project")
             subject = taskgenerationform.cleaned_data.get("subject")
-            segment_duration = taskgenerationform.cleaned_data.get("segment_duration")
+            duration = taskgenerationform.cleaned_data.get("segment_duration")
             # Fill SubjectPresence objects
             parse_subject_presence_annotations(request= request,project=project)
-            
+
             create_task_pairs(request= request,project=project, subject=subject, duration=duration)
             
-            
-        return redirect()
+    overlap = VideoImuOverlap.objects.all()
+    print(overlap)        
+    return render(request, 'showoverlap.html', {'overlap':overlap})    
 
     

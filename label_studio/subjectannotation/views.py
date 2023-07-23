@@ -68,6 +68,9 @@ def parse_subject_presence_annotations(request, project):
             end_time = result['value']['end']
             for label in labels:
                 subject = Subject.objects.get(name=label.replace('Subject: ',''))
-                SubjectPresence.objects.create(file_upload=file_upload,project=project,subject=subject,
+                if not SubjectPresence.objects.filter(file_upload=file_upload,project=project,subject=subject,
+                                                 start_time=start_time,end_time=end_time).exists():
+                    SubjectPresence.objects.create(file_upload=file_upload,project=project,subject=subject,
                                                  start_time=start_time,end_time=end_time)
+                
 

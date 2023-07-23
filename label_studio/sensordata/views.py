@@ -52,15 +52,17 @@ def addsensordata(request):
             match sensortype.sensortype:
                 # Parse and upload the data
                 case 'I':
-                    sensordata = parse_IMU(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
-                    fileupload = FileUpload.objects.filter(file__contains=uploaded_file.name).last()
-                    sensordata.fileupload = fileupload
+                    sensordata = parse_IMU(request=request, file_path=file_path,sensor=sensor,name=uploaded_file.name,project=project)
+                    file_upload = FileUpload.objects.filter(file__contains=uploaded_file.name).last()
+                    sensordata.file_upload = file_upload
                     sensordata.save()
 
                 case 'C':
-                    sensordata = parse_camera(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
-                    fileupload = FileUpload.objects.filter(file__contains=uploaded_file.name).last()
-                    sensordata.fileupload = fileupload
+                    sensordata = parse_camera(request=request, file_path=file_path,sensor=sensor,name=uploaded_file.name,project=project)
+                    file_upload = FileUpload.objects.filter(file__contains=uploaded_file.name).last()
+                    print(file_upload)
+                    sensordata.file_upload = file_upload
+                    print(sensordata.file_upload)
                     sensordata.save()
                 case 'M':
                     pass
@@ -191,10 +193,6 @@ def upload_sensor_data(request, name, file_path, project):
     files = {f'{name}': open(file_path, 'rb')}
     # Import the video to the correct project
     import_req = requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files)
-    import_req.content
-    print(import_req.content)
-    import_req.text
-    print(import_req.text)
 
 
 def deletesensordata(request, id):
