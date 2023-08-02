@@ -174,12 +174,14 @@ def parse_camera(request, file_path, sensor_type_id, name, project_id):
 def upload_sensor_data(request, name, file_path, project_id):
     user = request.user
     token = Token.objects.get(user=user)
-    # Get url for importing data to the correct project
-    import_url = request.build_absolute_uri(reverse('data_import:api-projects:project-import',kwargs={'pk':project_id}))
-    # Get temporary file URL from the form
-    files = {f'{name}': open(file_path, 'rb')}
-    # Import the video to the correct project
-    requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files) 
+    
+    for id in range(project_id, project_id+3):
+        # Get url for importing data to the correct project
+        import_url = request.build_absolute_uri(reverse('data_import:api-projects:project-import',kwargs={'pk':id}))
+        # Get temporary file URL from the form
+        files = {f'{name}': open(file_path, 'rb')}
+        # Import the video to the correct project
+        requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files) 
 
 
 def deletesensordata(request, id):
