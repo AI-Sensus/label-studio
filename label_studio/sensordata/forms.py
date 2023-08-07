@@ -12,5 +12,5 @@ class SensorDataForm(forms.Form):
 class SensorOffsetForm(forms.ModelForm):
     class Meta:
         model = SensorOffset
-        fields = ['sensor_A', 'sensor_B', 'offset', 'offset_Date']
+        fields = ['camera', 'imu', 'offset', 'offset_Date']
 
