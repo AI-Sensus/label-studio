@@ -18,6 +18,9 @@ def createannotationtask(request):
         if subjectannotationform.is_valid():
             # Get the dataimport project name from the form
             selected_project = subjectannotationform.cleaned_data.get("project")
+
+            # Project id
+            project_id = selected_project.id
                         
             # Retrieve the subject list
             subjects = Subject.objects.all()
@@ -27,23 +30,29 @@ def createannotationtask(request):
             
             # Get url for displaying all projects
             projects_url = request.build_absolute_uri(reverse('projects:api:project-list'))
+
+            # Get url for finding mp4 files
+            files_mp4 = request.build_absolute_uri(reverse('data_import:api-projects:project-file-upload-list', kwargs={'pk':project_id}))
+
+            # Add query parameters to filter files with names ending with '.mp4'
+            params = {'filename__endswith': '.mp4'}
             
             # Get current user token for authentication
             user = request.user
             token = Token.objects.get(user=user)
 
-            # Get ID of project
+            # Get list of project
             list_projects_response = requests.get(projects_url, headers={'Authorization': f'Token {token}'})
-            projects = list_projects_response.json()["results"]
-            
-            project_id = selected_project.id
+            projects = list_projects_response.json()["results"]          
+
+            # Get list of project files
+            data_response = requests.get(files_mp4, headers={'Authorization': f'Token {token}'}, params=params)
+            uploaded_files = data_response.json()
             
             if project_id is not None:
                 project_id += 1
-                
                 title = None
                 for project in projects:
-                    
                     if project["id"] == project_id:
                         title = project["title"]
                         break
@@ -55,9 +64,13 @@ def createannotationtask(request):
 
                 # Get url for displaying project detail
                 project_detail_url = request.build_absolute_uri(reverse('projects:api:project-detail', args=[project_id]))
+                # Get url for importing data to the correct project
+                import_url = request.build_absolute_uri(reverse('data_import:api-projects:project-import',kwargs={'pk':project_id}))
 
-                # Create tasks using LS API
+                # Create labels using LS API
                 requests.patch(project_detail_url, headers={'Authorization': f'Token {token}'}, data={'label_config':template})
+                # Import the video to the correct project
+                requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=uploaded_files) 
 
                 return redirect('landingpage:landingpage')
             
