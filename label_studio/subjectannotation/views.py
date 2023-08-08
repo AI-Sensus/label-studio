@@ -30,12 +30,6 @@ def createannotationtask(request):
             
             # Get url for displaying all projects
             projects_url = request.build_absolute_uri(reverse('projects:api:project-list'))
-
-            # Get url for finding mp4 files
-            files_mp4 = request.build_absolute_uri(reverse('data_import:api-projects:project-file-upload-list', kwargs={'pk':project_id}))
-
-            # Add query parameters to filter files with names ending with '.mp4'
-            params = {'filename__endswith': '.mp4'}
             
             # Get current user token for authentication
             user = request.user
@@ -44,10 +38,6 @@ def createannotationtask(request):
             # Get list of project
             list_projects_response = requests.get(projects_url, headers={'Authorization': f'Token {token}'})
             projects = list_projects_response.json()["results"]          
-
-            # Get list of project files
-            data_response = requests.get(files_mp4, headers={'Authorization': f'Token {token}'}, params=params)
-            uploaded_files = data_response.json()
             
             if project_id is not None:
                 project_id += 1
@@ -69,10 +59,9 @@ def createannotationtask(request):
 
                 # Create labels using LS API
                 requests.patch(project_detail_url, headers={'Authorization': f'Token {token}'}, data={'label_config':template})
-                # Import the video to the correct project
-                requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=uploaded_files) 
-
-                return redirect('landingpage:landingpage')
+                
+                tasks_url = reverse('data_manager:project-data', kwargs={'pk':project_id})
+                return redirect(tasks_url)
             
             else:
                 # Handle the case when the project with project_name was not found
