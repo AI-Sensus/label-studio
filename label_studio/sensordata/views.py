@@ -55,6 +55,7 @@ def addsensordata(request):
                     parse_IMU(request=request, file_path=file_path,sensor_type_id=sensortype.id,name=name,project_id=project_id)
                 case 'C':
                     parse_camera(request=request, file_path=file_path,sensor_type_id=sensortype.id,name=name,project_id=project_id)
+                    parse_camera(request=request, file_path=file_path,sensor_type_id=sensortype.id,name=name,project_id=(project_id+1))
                 case 'M':
                     pass
         return redirect('sensordata:sensordatapage')
