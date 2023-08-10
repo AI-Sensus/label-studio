@@ -6,8 +6,9 @@ from rest_framework.authtoken.models import Token
 from projects.models import Project
 from .models import MainProject
 
-def landingpage(request):
-    return render(request, 'landingpage.html')
+def landingpage(request, project_id):
+    main_project = MainProject.objects.get(project_id=project_id)
+    return render(request, 'landingpage.html', {'main_project': main_project})
 
 def homepage(request):
     # Reset main projects
@@ -66,7 +67,7 @@ def createProject(request):
                 data={'title': activityannotation_title}
             )
 
-            return redirect('landingpage:landingpage')
+            return redirect('landingpage:homepage')
 
     else:
         createprojectform = CreateProject()

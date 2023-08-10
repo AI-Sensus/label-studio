@@ -9,7 +9,12 @@
     <title>Landingpage</title>
 </head>
 <body>
-    <h1>Project overview</h1>
+  <div class="buttons">
+    <form action="/landingpage/homepage">
+      <input type="submit" value="Go back to home" style="background-color: #c4862b; width:25%"/>
+    </form>
+  </div>
+    <h1>{{ main_project }} - overview</h1>
     <ol>
         <li><a href="/landingpage/create_project">Name project</a></li>
         <li><a href="/sensormodel/sensor">Manage sensors</a></li>

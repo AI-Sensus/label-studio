@@ -50,6 +50,7 @@
     <title>Home</title>
 </head>
 <body>
+    <h1>Welcome</h1>
     <div class="buttons">
         <form action="/landingpage/create_project">
             <input type="submit" value="Create new project" style="background-color: #c4862b; width:25%"/>
@@ -69,7 +70,7 @@
             <tr>
                 <td>{{ project.name }}</td>
                 <td>{{ project.project_id }}</td>
-                <td>Landingpage</td>
+                <td><a href="{% url 'landingpage:landingpage' project.project_id %}">Go to project landingpage</a></td>
                 <td>Delete</td>
             </tr> 
            {% endfor %} 

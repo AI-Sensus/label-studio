@@ -19,7 +19,7 @@ import React from 'react';
 export const MenubarContext = createContext();
 
 const handleLandingpageItemClick = () => {
-  window.location.href = '/landingpage';
+  window.location.href = '/landingpage/homepage';
 };
 
 const LeftContextMenu = ({className}) => (
@@ -205,8 +205,8 @@ export const Menubar = ({
                   exact
                 />
                 <Menu.Item
-                  label="Landingpage"
-                  to="/landingpage"
+                  label="Homepage"
+                  to="/landingpage/homepage"
                   icon={<IconBook/>}
                   data-external
                   exact
