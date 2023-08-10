@@ -3,9 +3,31 @@ from django.urls import reverse
 import requests
 from .forms import CreateProject
 from rest_framework.authtoken.models import Token
+from projects.models import Project
+from .models import MainProject
 
 def landingpage(request):
     return render(request, 'landingpage.html')
+
+def homepage(request):
+    # Reset main projects
+    MainProject.objects.all().delete()
+    # Get all projects
+    all_projects = Project.objects.all()
+    # Loop through projects and only keep projects with names ending on '_dataimport'
+    filtered_projects = [project for project in all_projects if project.title.endswith('_dataimport')]
+
+    main_projects = []
+    for project in filtered_projects:
+        main_project = MainProject(
+            project_id=project.id,
+            name=project.title[:-11]  # Remove '_dataimport' from the project name
+        )
+        main_project.save()
+        
+    main_projects = MainProject.objects.all()
+    
+    return render(request, 'homepage.html', {'projects': main_projects})
 
 def createProject(request):
     if request.method == 'POST':
