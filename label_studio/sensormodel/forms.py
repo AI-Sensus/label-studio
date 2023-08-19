@@ -15,7 +15,7 @@ class SubjectForm(forms.ModelForm):
 class DeploymentForm(forms.ModelForm):
     class Meta:
         model = models.Deployment
-        fields = ['name','begin_datetime','end_datetime','location','sensor','subject']
+        fields = ['name','project','begin_datetime','end_datetime','location','sensor','subject']
 
     def clean(self):
         # Function used for form validation

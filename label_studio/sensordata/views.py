@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.apps import apps
 from .forms import SensorDataForm, SensorOffsetForm
 from .models import SensorData, SensorOffset
 from .parsing.sensor_data import SensorDataParser
@@ -52,18 +53,10 @@ def addsensordata(request):
             match sensortype.sensortype:
                 # Parse and upload the data
                 case 'I':
-                    sensordata = parse_IMU(request=request, file_path=file_path,sensor=sensor,name=uploaded_file.name,project=project)
-                    file_upload = FileUpload.objects.filter(file__contains=uploaded_file.name).last()
-                    sensordata.file_upload = file_upload
-                    sensordata.save()
+                    parse_IMU(request=request, file_path=file_path,sensor=sensor,name=uploaded_file.name,project=project)
 
                 case 'C':
-                    sensordata = parse_camera(request=request, file_path=file_path,sensor=sensor,name=uploaded_file.name,project=project)
-                    file_upload = FileUpload.objects.filter(file__contains=uploaded_file.name).last()
-                    print(file_upload)
-                    sensordata.file_upload = file_upload
-                    print(sensordata.file_upload)
-                    sensordata.save()
+                    parse_camera(request=request, file_path=file_path,sensor=sensor,name=uploaded_file.name,project=project)
                 case 'M':
                     pass
         return redirect('sensordata:sensordatapage')
@@ -127,7 +120,9 @@ def parse_IMU(request, file_path, sensor, name, project):
 
     # Upload parsed sensor(IMU) data to corresponding project
     upload_sensor_data(request=request, name=name, file_path=file_path ,project=project)
-    
+    # Retrieve id of the FileUpload object that just got created. This is the latest created instance of the class FileUpload
+    fileupload_model = apps.get_model(app_label='data_import', model_name='FileUpload')
+    file_upload = fileupload_model.objects.latest('id')
     # Parse to JSON to get begin and end datetime   
     sensor_data_json_string = sensor_df.to_json()
     sensor_data_json = json.loads(sensor_data_json_string)
@@ -156,15 +151,19 @@ def parse_IMU(request, file_path, sensor, name, project):
 
     # Create SensorData object with parsed data
     sensordata = SensorData.objects.create(name=name, sensor=sensor,\
-        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project)
-    
-    return sensordata
+        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project,file_upload=file_upload)
     
 
 
 def parse_camera(request, file_path, sensor, name, project):
     # Upload video to project
     upload_sensor_data(request=request, name=name, file_path=file_path ,project=project)
+    # Retrieve id of the FileUpload object that just got created. This is the latest created instance of the class FileUpload
+    fileupload_model = apps.get_model(app_label='data_import', model_name='FileUpload')
+    file_upload = fileupload_model.objects.latest('id')
+    
+
+    
     # Get sensortype config
     sensortype = SensorType.objects.get(id=sensor.sensortype.id)
     sensor_timezone = sensortype.timezone
@@ -180,9 +179,7 @@ def parse_camera(request, file_path, sensor, name, project):
 
     # Create SensorData object with parsed data
     sensordata = SensorData.objects.create(name=name, sensor=sensor,\
-        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project)
-    
-    return sensordata
+        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project, file_upload=file_upload)
     
 def upload_sensor_data(request, name, file_path, project):
     user = request.user
