@@ -79,8 +79,8 @@
                 <td>{{ sensor.sensor_id }}</td>
                 <td>{{ sensor.description }}</td> 
                 <td>{{ sensor.sensortype }}</td>
-                <td><a href="{% url 'sensormodel:adjust_sensor' sensor.id %}"> [Edit] </a></td>
-                <td><a href="{% url 'sensormodel:delete_sensor' sensor.id %}">[Delete]</a></td>
+                <td><a href="{% url 'sensormodel:adjust_sensor' project.id sensor.id %}"> [Edit] </a></td>
+                <td><a href="{% url 'sensormodel:delete_sensor' project.id sensor.id %}">[Delete]</a></td>
             </tr> 
            {% endfor %} 
         </table>
