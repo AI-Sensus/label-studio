@@ -73,3 +73,16 @@ def createProject(request):
         createprojectform = CreateProject()
     
     return render(request, 'createproject.html', {'createprojectform': createprojectform})
+
+def deleteProject(request, project_id):
+    mainproject = MainProject.objects.get(project_id=project_id)
+    if request.method == 'POST':
+        # Send POST to delete a sensor
+        mainproject.delete()
+        for ii in range(0,3):
+            project = Project.objects.get(id=(project_id+ii))
+            project.delete()
+        return redirect('landingpage:homepage')
+    else:
+        # Go to delete confirmation page
+        return render(request, 'deleteProject.html', {'mainproject': mainproject})

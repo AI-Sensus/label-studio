@@ -17,8 +17,8 @@
     <h1>{{ main_project }} - overview</h1>
     <ol>
         <li><a href="{% url 'sensormodel:sensor' main_project.project_id %}">Manage sensors</a></li>
-        <li><a href="/sensormodel/subject">Manage subjects</a></li>
-        <li><a href="/sensormodel/deployment">Manage deployments</a></li>
+        <li><a href="{% url 'sensormodel:subject' main_project.project_id %}">Manage subjects</a></li>
+        <li><a href="{% url 'sensormodel:deployment' main_project.project_id %}">Manage deployments</a></li>
         <li><a href="/sensordata/">Manage data</a></li>
         <li><a href="/sensordata/offset">Synchronize sensors</a></li>
         <li><a href="/subjectannotation/">Annotate videos</a></li>
