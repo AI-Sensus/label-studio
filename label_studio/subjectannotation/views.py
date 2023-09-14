@@ -1,60 +1,66 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from .forms import SubjectAnnotationForm
 from .utils.annotationtemplate import createSubjectAnnotationTemplate
 import requests
 from rest_framework.authtoken.models import Token
 from tasks.models import Task, Annotation
 from subjectannotation.models import SubjectPresence
 from sensormodel.models import Subject
+from projects.models import Project
 
 # Create your views here.
-def annotationtaskpage(request):
-    subjectannotationform = SubjectAnnotationForm()
-    return render(request, 'annotationtaskpage.html', {'subjectannotationform':subjectannotationform})
+def annotationtaskpage(request, project_id):
+    project = Project.objects.get(id=project_id)
+    return render(request, 'annotationtaskpage.html', {'project':project})
 
-def createannotationtask(request):
-    # Functions that creates an API call to create a task with a video and the corresponding subjects as labels for subject annotation
-    if request.method == 'POST':
-        subjectannotationform = SubjectAnnotationForm(request.POST, request.FILES)
-        if subjectannotationform.is_valid():
-            ## Create project
-            deployment = subjectannotationform.cleaned_data.get("deployment")
-            deployment.CreateLists()
-            sensorlist, subjectlist = deployment.sensorlist, deployment.subjectlist
-            # Create a XML markup for annotating
-            template = createSubjectAnnotationTemplate(subjectlist)
-            title = str(deployment)
-            
-            # Get url for displaying all projects
-            projects_url = request.build_absolute_uri(reverse('projects:api:project-list'))
-            
-            # Get current user token for authentication
-            user = request.user
-            token = Token.objects.get(user=user)
+def createannotationtask(request, project_id):
+    project = Project.objects.get(id=project_id)
+    # Functions that creates an API call to create a task with subjects as labels for subject annotation
+    if request.method == 'POST':                    
+        # Retrieve the subject list
+        subjects = Subject.objects.filter(project=project)
+        
+        # Create labels for subject annotation
+        labels = ", ".join([f"Subject: {subject.name}" for subject in subjects])
+        
+        # Get url for displaying all projects
+        projects_url = request.build_absolute_uri(reverse('projects:api:project-list'))
+        
+        # Get current user token for authentication
+        user = request.user
+        token = Token.objects.get(user=user)
 
-            # Create project using LS API
-            requests.post(projects_url, headers={'Authorization': f'Token {token}'}, 
-                          data={'label_config':template, 'title':title})
-            
-            ## Import data
-            # Get ID of last created project    
-            list_projects_response = requests.get(projects_url, headers={'Authorization': f'Token {token}'})
-            last_project_id = list_projects_response.json()["results"][0]["id"]
 
+        # Get list of project
+        list_projects_response = requests.get(projects_url, headers={'Authorization': f'Token {token}'})
+        projects = list_projects_response.json()["results"]          
+        
+        if project_id is not None:
+            project_id += 1
+            title = None
+            for project in projects:
+                if project["id"] == project_id:
+                    title = project["title"]
+                    break
+            if title == None:
+                # error for not finding subjectannotation project
+                raise ValueError(f'Could not find subject annotation project {title}')
+            # Create a XML markup for annotatings
+            template = createSubjectAnnotationTemplate(labels)
+
+            # Get url for displaying project detail
+            project_detail_url = request.build_absolute_uri(reverse('projects:api:project-detail', args=[project_id]))
             # Get url for importing data to the correct project
-            import_url = request.build_absolute_uri(reverse('data_import:api-projects:project-import',
-                                                            kwargs={'pk':last_project_id}))
-            # Get temporary file URL from the form
-            file_url = request.FILES['file'].temporary_file_path()
-            files = {f'{request.FILES["file"]}': open(file_url, 'rb')}
-            # Import the video to the correct project
-            requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files)
-            # Go the projects page
-            return redirect('projects:project-index')
+            import_url = request.build_absolute_uri(reverse('data_import:api-projects:project-import',kwargs={'pk':project_id}))
 
-    subjectannotationform = SubjectAnnotationForm()
-    return render(request, 'annotationtaskpage.html', {'subjectannotationform':subjectannotationform})
+
+            # Create labels using LS API
+            requests.patch(project_detail_url, headers={'Authorization': f'Token {token}'}, data={'label_config':template})
+            
+            tasks_url = reverse('data_manager:project-data', kwargs={'pk':project_id})
+            return redirect(tasks_url)
+            
+    return render(request, 'annotationtaskpage.html', {'project':project})
 
 
 def parse_subject_presence_annotations(request, project):
@@ -73,4 +79,5 @@ def parse_subject_presence_annotations(request, project):
                     SubjectPresence.objects.create(file_upload=file_upload,project=project,subject=subject,
                                                  start_time=start_time,end_time=end_time)
                 
+
 

@@ -35,11 +35,13 @@ input[type=submit]:hover {
 </head>
 <body>
     <div class="buttons">
-        <form action="/sensordata/offset">
+        <form action="{% url 'sensordata:offset' project.id %}">
             <input type="submit" value="Go back to sensor offset page" />
         </form>
     </div>
     <div class="forms">
+        <p>Add the offset between the camera and the IMU. Since the internal time of both devices will never be fully synced there will always be an offset between the two.</p>
+        <p>Here this offset can be added in milliseconds to synchronize the data of the camera and the IMU.</p>
         <form action="" method="post">
             <table>
             {{ offsetform.as_table }}
