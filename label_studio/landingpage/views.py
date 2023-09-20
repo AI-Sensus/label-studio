@@ -8,6 +8,7 @@ from .models import MainProject
 from django.http import HttpResponse
 import json
 import zipfile
+from tasks.models import Task
 
 def landingpage(request, project_id):
     main_project = MainProject.objects.get(project_id=project_id)
@@ -88,6 +89,9 @@ def deleteProject(request, project_id):
         mainproject.delete()
         for ii in range(0,3):
             project = Project.objects.get(id=(project_id+ii))
+            # Get all tasks of the project
+            tasks = Task.objects.filter(project=project)
+            tasks.delete()
             project.delete()
         return redirect('landingpage:homepage')
     else:

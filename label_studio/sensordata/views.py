@@ -23,6 +23,7 @@ import fnmatch
 import zipfile
 from django.http import HttpResponseBadRequest
 from projects.models import Project
+from tasks.models import Task
 
 
 UNITS = {'days': 86400, 'hours': 3600, 'minutes': 60, 'seconds':1, 'milliseconds':0.001}
@@ -211,15 +212,43 @@ def upload_sensor_data(request, name, file_path, project):
     # Import the video to the correct project
     import_req = requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files)
 
-
 def deletesensordata(request, project_id, id):
-    project = Project.objects.get(id=project_id)
-    sensordata = SensorData.objects.get(id=id)           
-    if request.method == 'POST':
-        # Send POST to delete a sensor
+    try:
+        project = Project.objects.get(id=project_id)
+        sensordata = SensorData.objects.get(id=id)
         
-        sensordata.delete()
-        return redirect('sensordata:sensordatapage', project_id=project_id)
-    else:
-        # Go to delete confirmation page
-        return render(request, 'deleteconfirmation.html', {'project':project})             
+        if request.method == 'POST':
+            # Delete related tasks with the same file_upload and project
+            data_tasks = Task.objects.filter(
+                file_upload=sensordata.file_upload,
+                project=project
+            )
+            
+            # also for subjectannotation and activity annotation projects
+            new_project_id = project_id + 1
+            subject_project = Project.objects.get(id=new_project_id)
+            subject_tasks = Task.objects.filter(
+                file_upload=sensordata.file_upload,
+                project=subject_project
+            )
+            new_project_id += 1
+            activity_project = Project.objects.get(id=new_project_id)
+            activity_tasks = Task.objects.filter(
+                file_upload = sensordata.file_upload,
+                project=activity_project
+            )
+            # Delete tasks
+            data_tasks.delete()
+            subject_tasks.delete()
+            activity_tasks.delete()
+
+            # Delete the SensorData object
+            sensordata.delete()
+            
+            return redirect('sensordata:sensordatapage', project_id=project_id)
+        else:
+            # Go to delete confirmation page
+            return render(request, 'deleteconfirmation.html', {'project': project})
+    except (Project.DoesNotExist, SensorData.DoesNotExist):
+        raise ValueError("Project or SensorData does not exist.")
+           
