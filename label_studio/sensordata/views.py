@@ -76,7 +76,7 @@ def process_sensor_file(request, file_path, sensor, name, project):
         parse_IMU(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
     elif sensortype.sensortype == 'C':  # Camera sensor type
         parse_camera(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
-        parse_camera(request=request, file_path=file_path,sensor=sensor,name=name, project=subjectannotation_project)
+        #parse_camera(request=request, file_path=file_path,sensor=sensor,name=name, project=subjectannotation_project)
     elif sensortype.sensortype == 'M':  # Other sensor type (add handling logic here)
         pass
     # Add handling for other sensor types as needed
@@ -172,13 +172,15 @@ def parse_IMU(request, file_path, sensor, name, project):
 
 
 def parse_camera(request, file_path, sensor, name, project):
+    subjectannotation_project = Project.objects.get(id=(project.id+1))
     # Upload video to project
     upload_sensor_data(request=request, name=name, file_path=file_path ,project=project)
+    # Upload video to subjectannotation project
+    upload_sensor_data(request=request, name=name, file_path=file_path ,project=subjectannotation_project)
     # Retrieve id of the FileUpload object that just got created. This is the latest created instance of the class FileUpload
     fileupload_model = apps.get_model(app_label='data_import', model_name='FileUpload')
-    file_upload = fileupload_model.objects.latest('id')
-    
-
+    file_upload_dataimport = fileupload_model.objects.filter(project=project).latest('id')
+    file_upload_subjectannotation = fileupload_model.objects.filter(project=subjectannotation_project).latest('id')
     
     # Get sensortype config
     sensortype = SensorType.objects.get(id=sensor.sensortype.id)
@@ -195,7 +197,7 @@ def parse_camera(request, file_path, sensor, name, project):
 
     # Create SensorData object with parsed data
     sensordata = SensorData.objects.create(name=name, sensor=sensor,\
-        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project, file_upload=file_upload)
+        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project, file_upload=file_upload_dataimport, file_upload_project2 = file_upload_subjectannotation)
     
 def upload_sensor_data(request, name, file_path, project):
     user = request.user
@@ -219,23 +221,16 @@ def deletesensordata(request, project_id, id):
                 project=project
             )
             
-            # also for subjectannotation and activity annotation projects
+            # also for subjectannotation project
             new_project_id = project_id + 1
             subject_project = Project.objects.get(id=new_project_id)
             subject_tasks = Task.objects.filter(
-                file_upload=sensordata.file_upload,
+                file_upload=sensordata.file_upload_project2,
                 project=subject_project
-            )
-            new_project_id += 1
-            activity_project = Project.objects.get(id=new_project_id)
-            activity_tasks = Task.objects.filter(
-                file_upload = sensordata.file_upload,
-                project=activity_project
             )
             # Delete tasks
             data_tasks.delete()
             subject_tasks.delete()
-            activity_tasks.delete()
 
             # Delete the SensorData object
             sensordata.delete()
