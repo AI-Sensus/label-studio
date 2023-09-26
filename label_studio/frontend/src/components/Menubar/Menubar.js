@@ -18,7 +18,7 @@ import React from 'react';
 
 export const MenubarContext = createContext();
 
-const handleLandingpageItemClick = () => {
+const handleHomepageItemClick = () => {
   window.location.href = '/landingpage/homepage';
 };
 
@@ -52,6 +52,45 @@ export const Menubar = ({
   onSidebarToggle,
   onSidebarPin,
 }) => {
+
+  
+  
+  const handleLandingpageItemClick = () => {
+    // Get the project_id from the current URL
+    const currentURL = window.location.href;
+    console.log('currentURL:', currentURL);
+  
+    // Function to extract project_id from the URL
+    const extractProjectId = (url) => {
+      const parts = url.split('/');
+      for (const part of parts) {
+        const projectId = parseInt(part, 10);
+        if (!isNaN(projectId)) {
+          return projectId;
+        }
+      }
+      return null;
+    };
+  
+    const project_id = extractProjectId(currentURL);
+  
+    if (project_id !== null) {
+      console.log('project_id:', project_id);
+  
+      // Construct the URL with project_id
+      const landingpageURL = `/landingpage/${project_id}`;
+  
+      // Programmatically navigate to the URL
+      window.location.href = landingpageURL;
+    } else {
+      // If project_id is null, navigate to a default URL
+      window.location.href = '/landingpage/homepage';
+    }
+  };
+  
+  
+  
+
   const menuDropdownRef = useRef();
   const useMenuRef = useRef();
   const location = useFixedLocation();
@@ -117,6 +156,7 @@ export const Menubar = ({
     }
     useMenuRef?.current?.close();
   }, [location]);
+  
 
   return (
     <div className={contentClass}>
@@ -177,7 +217,6 @@ export const Menubar = ({
           </Dropdown.Trigger>
         </div>
       )}
-
       <VersionProvider>
         <div className={contentClass.elem('body')}>
           {enabled && (
@@ -208,6 +247,13 @@ export const Menubar = ({
                   label="Homepage"
                   to="/landingpage/homepage"
                   icon={<IconBook/>}
+                  data-external
+                  exact
+                  onClick={handleHomepageItemClick}
+                />  
+                <Menu.Item
+                  label="Landingpage"
+                  icon={<IconBook />}
                   data-external
                   exact
                   onClick={handleLandingpageItemClick}
