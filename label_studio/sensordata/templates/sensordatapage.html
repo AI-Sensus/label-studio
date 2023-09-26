@@ -66,7 +66,7 @@
                 <th>Begin Date Time</th>
                 <th>End Date Time</th>
                 <th>Project</th>
-                <th>Sensor type</th>
+                <th>Sensor</th>
                 <th></th>
             </tr>
             {% for sendata in sensordata %}
@@ -76,8 +76,7 @@
                 <td>{{ sendata.end_datetime|date:"F d, Y, H:i:s" }}</td>
                 <td>{{ sendata.project}} </td>
                 <td>{{ sendata.sensor}} </td>
-                <td><a href="{% url 'sensordata:delete' sendata.id %}">[Delete]</a></td>
-
+                <td><a href="{% url 'sensordata:delete' project.id sendata.id %}">[Delete]</a></td>
             </tr> 
             {% endfor %} 
         </table>
