@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.conf import settings
 import requests
 from .forms import CreateProject
 from rest_framework.authtoken.models import Token
@@ -9,6 +10,7 @@ from django.http import HttpResponse
 import json
 import zipfile
 from tasks.models import Task
+import os, shutil
 
 def landingpage(request, project_id):
     main_project = MainProject.objects.get(project_id=project_id)
@@ -85,9 +87,15 @@ def createProject(request):
 def deleteProject(request, project_id):
     mainproject = MainProject.objects.get(project_id=project_id)
     if request.method == 'POST':
+        
         # Send POST to delete a sensor
         mainproject.delete()
         for ii in range(0,3):
+            # Delete the project's file upload folder
+            project_upload_folder = os.path.join(settings.MEDIA_ROOT, settings.UPLOAD_DIR, str(project_id+ii))
+            if os.path.exists(project_upload_folder):
+                shutil.rmtree(project_upload_folder)
+            
             project = Project.objects.get(id=(project_id+ii))
             # Get all tasks of the project
             tasks = Task.objects.filter(project=project)

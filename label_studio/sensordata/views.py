@@ -236,6 +236,13 @@ def deletesensordata(request, project_id, id):
             # Delete tasks
             data_tasks.delete()
             subject_tasks.delete()
+            
+            # Get the path to the physical data file
+            data_file_path = sensordata.file_upload.file.path
+
+            # Delete the physical data file
+            if os.path.exists(data_file_path):
+                os.remove(data_file_path)
 
             # Delete the SensorData object
             sensordata.delete()
