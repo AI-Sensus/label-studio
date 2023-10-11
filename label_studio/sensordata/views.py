@@ -221,16 +221,7 @@ def deletesensordata(request, project_id, id):
                 project=project
             )
             
-            # also for subjectannotation project
-            new_project_id = project_id + 1
-            subject_project = Project.objects.get(id=new_project_id)
-            subject_tasks = Task.objects.filter(
-                file_upload=sensordata.file_upload_project2,
-                project=subject_project
-            )
-            # Delete tasks
             data_tasks.delete()
-            subject_tasks.delete()
             
             # Get the path to the physical data file
             data_file_path = sensordata.file_upload.file.path
@@ -238,6 +229,21 @@ def deletesensordata(request, project_id, id):
             # Delete the physical data file
             if os.path.exists(data_file_path):
                 os.remove(data_file_path)
+
+            # Check if file_upload_project2 exists and delete associated tasks and file
+            if sensordata.file_upload_project2:
+                new_project_id = project_id + 1
+                subject_project = Project.objects.get(id=new_project_id)
+                subject_tasks = Task.objects.filter(
+                    file_upload=sensordata.file_upload_project2,
+                    project=subject_project
+                )
+                subject_tasks.delete()
+
+                data_file_path_2 = sensordata.file_upload_project2.file.path
+                if os.path.exists(data_file_path_2):
+                    print('deleted')
+                    os.remove(data_file_path_2)
 
             # Delete the SensorData object
             sensordata.delete()
@@ -248,4 +254,6 @@ def deletesensordata(request, project_id, id):
             return render(request, 'deleteconfirmation.html', {'project': project})
     except (Project.DoesNotExist, SensorData.DoesNotExist):
         raise ValueError("Project or SensorData does not exist.")
+
+
            
