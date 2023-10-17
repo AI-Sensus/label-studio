@@ -179,7 +179,7 @@ def create_annotation_data_chunks(request, project, subject, duration,value_colu
                     # Only keep the rows in between the obtained indeces
                     segment_imu_df = imu_df.iloc[start_index:end_index]
                     # Add offset to every timestamp so that everthing shifts s.t. start time is 0
-                    segment_imu_df.iloc[:, timestamp_column] = segment_imu_df.iloc[:, timestamp_column] - segment_imu_df.iloc[start_index, timestamp_column]
+                    segment_imu_df.iloc[:, timestamp_column] = segment_imu_df.iloc[:, timestamp_column] - segment_imu_df.iloc[0, timestamp_column]
                     # Create temporary file and save new csv to this file
                     segment_imu_df.to_csv(temp_imu, index=False)
                     
