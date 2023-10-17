@@ -7,21 +7,16 @@ from .parsing.sensor_data import SensorDataParser
 from .parsing.video_metadata import VideoMetaData
 from .parsing.controllers.project_controller import ProjectController
 from pathlib import Path
-from django.core.files.uploadedfile import InMemoryUploadedFile
+
 import json
 from datetime import timedelta
 from sensormodel.models import SensorType, Sensor
-from data_import.models import FileUpload
 from rest_framework.authtoken.models import Token
 import requests
 from tempfile import NamedTemporaryFile
-from django.conf import settings
-import os
-import io
-import csv
-import fnmatch
+import numpy as np
 import zipfile
-from django.http import HttpResponseBadRequest
+
 from projects.models import Project
 
 
@@ -118,12 +113,17 @@ def parse_IMU(request, file_path, sensor, name, project):
     project_controller = ProjectController()
     sensor_data = SensorDataParser(project_controller=project_controller, file_path=Path(file_path),sensor_model_id= sensortype.id)
     # Get parsed data
-    sensor_df = sensor_data.get_data()
+    imu_df = sensor_data.get_data()
+    # Add L2 norm of Ax,Ay,Az
+    try:
+        imu_df['A3D'] = np.sqrt(imu_df['Ax']**2 + imu_df['Ay']**2 + imu_df['Az']**2)
+    except KeyError as e:
+        print(print("No Ax, Ay or Az columns. ", e))
     # Now that the sensordata has been parsed it has to be transformed back to a .csv file and uploaded to the correct project
     # Create NamedTemporary file of type csv
     with NamedTemporaryFile(suffix='.csv', prefix=(str(name).split('/')[-1]) ,mode='w', delete=False) as csv_file:
         # Write the dataframe to the temporary file
-        sensor_df.to_csv(csv_file.name, index=False)
+        imu_df.to_csv(csv_file.name, index=False)
         file_path=csv_file.name
     # Upload parsed sensor(IMU) data to corresponding project
     upload_sensor_data(request=request, name=name, file_path=file_path ,project=project)
@@ -131,7 +131,7 @@ def parse_IMU(request, file_path, sensor, name, project):
     fileupload_model = apps.get_model(app_label='data_import', model_name='FileUpload')
     file_upload = fileupload_model.objects.latest('id')
     # Parse to JSON to get begin and end datetime   
-    sensor_data_json_string = sensor_df.to_json()
+    sensor_data_json_string = imu_df.to_json()
     sensor_data_json = json.loads(sensor_data_json_string)
     begin_datetime = sensor_data.metadata.utc_dt
     relative_absolute = sensortype.relative_absolute
