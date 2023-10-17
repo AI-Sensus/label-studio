@@ -13,7 +13,6 @@ import subprocess
 import os
 import pandas as pd
 import json
-import re
 import requests
 
 from projects.models import Project
@@ -122,8 +121,6 @@ def create_annotation_data_chunks(request, project, subject, duration,value_colu
             imu_file_path = longest_overlap.sensordata_B.file_upload.file.path
             timestamp_column = longest_overlap.sensordata_B.sensor.sensortype.timestamp_column
             imu_df = pd.read_csv(imu_file_path,skipfooter=1, engine='python')
-            # Remove non-letters from column names
-            imu_df.columns = [re.sub(r'[^a-zA-Z]', '', col) for col in imu_df.columns]
             # Get column names for showing in LS
             timestamp_column_name = imu_df.columns[timestamp_column]
             value_column_name = imu_df.columns[int(value_column)]

@@ -15,7 +15,10 @@ from rest_framework.authtoken.models import Token
 import requests
 from tempfile import NamedTemporaryFile
 import numpy as np
+import pandas as pd
 import zipfile
+import re
+import os
 
 from projects.models import Project
 
@@ -119,6 +122,8 @@ def parse_IMU(request, file_path, sensor, name, project):
         imu_df['A3D'] = np.sqrt(imu_df['Ax']**2 + imu_df['Ay']**2 + imu_df['Az']**2)
     except KeyError as e:
         print(print("No Ax, Ay or Az columns. ", e))
+    # Remove non-letters from column names
+    imu_df.columns = [re.sub(r'[^a-zA-Z]', '', col) for col in imu_df.columns]
     # Now that the sensordata has been parsed it has to be transformed back to a .csv file and uploaded to the correct project
     # Create NamedTemporary file of type csv
     with NamedTemporaryFile(suffix='.csv', prefix=(str(name).split('/')[-1]) ,mode='w', delete=False) as csv_file:
@@ -226,15 +231,15 @@ def generate_offset_anno_tasks(request, project_id):
             sensortype_B = Sensor.objects.filter(project=project).exclude(sensortype=sensortype_A).first().sensortype
             for sendata_A in sync_sensordata.filter(sensor__sensortype__sensortype=sensortype_A.sensortype):
                 for sendata_B in sync_sensordata.filter(sensor__sensortype__sensortype=sensortype_B.sensortype):
-                    
-                    
+                    sendata_B_df = pd.read_csv(sendata_B.file_upload.file.path,skipfooter=1, engine='python')
+                    timestamp_column_name = sendata_B_df.columns[sensortype_B.timestamp_column]
                     task_json_template = {
-                        "csv": f"{sendata_B.file_upload.file.url}?time={timestamp_column_name}&values={value_column_name}",
-                        "video": f"<video src='{sendata_A.file_upload.file.url}' width='100%' controls onloadeddata=\"setTimeout(function(){{ts=Htx.annotationStore.selected.names.get('ts');t=ts.data.{timestamp_column_name.lower()};v=document.getElementsByTagName('video')[0];w=parseInt(t.length*(5/v.duration));l=t.length-w;ts.updateTR([t[0], t[w]], 1.001);r=$=>ts.brushRange.map(n=>(+n).toFixed(2));_=r();setInterval($=>r().some((n,i)=>n!==_[i])&&(_=r())&&(v.currentTime=v.duration*(r()[0]-t[0])/(t.slice(-1)[0]-t[0]-(r()[1]-r()[0]))),100); console.log('video is loaded, starting to sync with time series')}}, 3000); \" />"
+                        "csv": f"{sendata_B.file_upload.file.url}?time={timestamp_column_name}&values={'a3d'}",
+                        "video": f"<video src='{sendata_A.file_upload.file.url}' width='100%' controls onloadeddata=\"setTimeout(function(){{ts=Htx.annotationStore.selected.names.get('ts');t=ts.data.{timestamp_column_name.lower()};v=document.getElementsByTagName('video')[0];w=parseInt(t.length*(5/v.duration));l=t.length-w;ts.updateTR([t[0], t[w]], 1.001);r=$=>ts.brushRange.map(n=>(+n).toFixed(2));_=r();setInterval($=>r().some((n,i)=>n!==_[i])&&(_=r())&&(v.currentTime=v.duration*(r()[0]-t[0])/(t.slice(-1)[0]-t[0]-(r()[1]-r()[0]))),10); console.log('video is loaded, starting to sync with time series')}}, 3000); \" />"
                     }
-                    with NamedTemporaryFile(prefix=f'segment_{i}_', suffix='.json',mode='w',delete=False) as task_json_file:
+                    with NamedTemporaryFile(prefix=f'{sendata_A.sensor.id}_{sendata_B.sensor.id}', suffix='.json',mode='w',delete=False) as task_json_file:
                         json.dump(task_json_template,task_json_file,indent=4)
-                    upload_sensor_data(request, name=f'segment: {i}', file_path=task_json_file.name, project=offset_annotation_project)
+                    upload_sensor_data(request, name=f'{sendata_A.sensor}_{sendata_B.sensor}', file_path=task_json_file.name, project=offset_annotation_project)
                     
             sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
             offsetannotationform = OffsetAnnotationForm(project=project)
