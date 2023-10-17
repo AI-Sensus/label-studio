@@ -213,8 +213,17 @@ def deletesensordata(request, project_id, id):
     
 
 def generate_offset_anno_tasks(request, project_id):
+    project = Project.objects.get(id=project_id)
     if request.method == 'POST':
         offsetannotationform = OffsetAnnotationForm(request.POST)
-        
+        if offsetannotationform.is_valid():
+            sync_sensordata = offsetannotationform.cleaned_data.get('sync_sensordata')
+            
+            
+            sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
+            offsetannotationform = OffsetAnnotationForm(project=project)
+            return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project}) 
+        else:
+            print('Form invalid')
     else:
         pass
