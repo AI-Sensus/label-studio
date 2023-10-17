@@ -57,9 +57,9 @@
         </form>
     </div>
     <div class="forms">
-        <h2>Add sensor offset</h2>
-        <form action="{% url 'sensordata:offset' project.id %}" method="post">
-            {{ sensoroffsetform }}
+        <h2>Select the data that is intended for the syncronization of the sensors</h2>
+        <form action="{% url 'sensordata:generate_tasks' project.id %}" method="post">
+            {{ offsetannotationform }}
             <input type="submit" value="Add sensor offset">
         </form>
     </div>

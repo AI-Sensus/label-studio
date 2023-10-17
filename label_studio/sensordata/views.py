@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.apps import apps
-from .forms import SensorDataForm, SensorOffsetForm
+from .forms import SensorDataForm, SensorOffsetForm, OffsetAnnotationForm
 from .models import SensorData, SensorOffset
 from .parsing.sensor_data import SensorDataParser
 from .parsing.video_metadata import VideoMetaData
@@ -83,16 +83,8 @@ def process_sensor_file(request, file_path, sensor, name, project):
 def offset(request, project_id):
     project = Project.objects.get(id=project_id)
     sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
-    if request.method == 'POST':
-        sensoroffsetform = SensorOffsetForm(request.POST)
-        if sensoroffsetform.is_valid():
-            # create and save the new SensorOffset instance
-            sensoroffsetform.save()
-            # redirect to the offset view and pass the sensoroffset queryset to the context
-            return redirect('sensordata:offset', project_id=project_id)
-    else:
-        sensoroffsetform = SensorOffsetForm(project=project)
-    return render(request, 'offset.html', {'sensoroffsetform':sensoroffsetform, 'sensoroffset':sensoroffset, 'project':project})
+    offsetannotationform = OffsetAnnotationForm(project=project)
+    return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project})
 
 def delete_offset(request, project_id, id):
     project = Project.objects.get(id=project_id)
@@ -217,4 +209,12 @@ def deletesensordata(request, project_id, id):
         return redirect('sensordata:sensordatapage', project_id=project_id)
     else:
         # Go to delete confirmation page
-        return render(request, 'deleteconfirmation.html', {'project':project})             
+        return render(request, 'deleteconfirmation.html', {'project':project})
+    
+
+def generate_offset_anno_tasks(request, project_id):
+    if request.method == 'POST':
+        offsetannotationform = OffsetAnnotationForm(request.POST)
+        
+    else:
+        pass
