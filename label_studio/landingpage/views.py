@@ -18,7 +18,6 @@ from .models import MainProject
 
 def landingpage(request, project_id):
     main_project = None
-
     for id in range(project_id, 0, -1):
         try:
             main_project = MainProject.objects.get(project_id=id)
@@ -28,7 +27,6 @@ def landingpage(request, project_id):
 
     if main_project is None:
         return HttpResponseNotFound('No existing project found for any project_id')
-
     return render(request, 'landingpage.html', {'main_project': main_project})
 
 
