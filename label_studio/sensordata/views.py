@@ -10,7 +10,7 @@ from pathlib import Path
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import json
 from datetime import timedelta
-from sensormodel.models import SensorType
+from sensormodel.models import SensorType, Sensor
 from data_import.models import FileUpload
 from rest_framework.authtoken.models import Token
 import requests
@@ -214,16 +214,32 @@ def deletesensordata(request, project_id, id):
 
 def generate_offset_anno_tasks(request, project_id):
     project = Project.objects.get(id=project_id)
+    offset_annotation_project = Project.objects.get(id=project.id+3)
     if request.method == 'POST':
         offsetannotationform = OffsetAnnotationForm(request.POST)
         if offsetannotationform.is_valid():
             sync_sensordata = offsetannotationform.cleaned_data.get('sync_sensordata')
-            
-            
+            try:
+                sensortype_A = SensorData.objects.filter(project=Project.objects.get(id=project_id+1)).first().sensor.sensortype
+            except: 
+                print('No sensortypes found in subject annotation project')
+            sensortype_B = Sensor.objects.filter(project=project).exclude(sensortype=sensortype_A).first().sensortype
+            for sendata_A in sync_sensordata.filter(sensor__sensortype__sensortype=sensortype_A.sensortype):
+                for sendata_B in sync_sensordata.filter(sensor__sensortype__sensortype=sensortype_B.sensortype):
+                    
+                    
+                    task_json_template = {
+                        "csv": f"{sendata_B.file_upload.file.url}?time={timestamp_column_name}&values={value_column_name}",
+                        "video": f"<video src='{sendata_A.file_upload.file.url}' width='100%' controls onloadeddata=\"setTimeout(function(){{ts=Htx.annotationStore.selected.names.get('ts');t=ts.data.{timestamp_column_name.lower()};v=document.getElementsByTagName('video')[0];w=parseInt(t.length*(5/v.duration));l=t.length-w;ts.updateTR([t[0], t[w]], 1.001);r=$=>ts.brushRange.map(n=>(+n).toFixed(2));_=r();setInterval($=>r().some((n,i)=>n!==_[i])&&(_=r())&&(v.currentTime=v.duration*(r()[0]-t[0])/(t.slice(-1)[0]-t[0]-(r()[1]-r()[0]))),100); console.log('video is loaded, starting to sync with time series')}}, 3000); \" />"
+                    }
+                    with NamedTemporaryFile(prefix=f'segment_{i}_', suffix='.json',mode='w',delete=False) as task_json_file:
+                        json.dump(task_json_template,task_json_file,indent=4)
+                    upload_sensor_data(request, name=f'segment: {i}', file_path=task_json_file.name, project=offset_annotation_project)
+                    
             sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
             offsetannotationform = OffsetAnnotationForm(project=project)
             return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project}) 
-        else:
-            print('Form invalid')
     else:
-        pass
+        sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
+        offsetannotationform = OffsetAnnotationForm(project=project)
+        return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project}) 
