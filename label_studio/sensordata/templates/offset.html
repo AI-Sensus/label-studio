@@ -63,6 +63,11 @@
             <input type="submit" value="Add sensor offset">
         </form>
     </div>
+    <div class="buttons">
+        <form action="{% url 'sensordata:parse_offset' project.id %}">
+            <input type="submit" value="Synchronize offset annotations" style="background-color: #c4862b; width:25%"/>
+        </form>
+    </div>
     <div class="sensoroffset">
         <h2>Sensor offsets</h2>
         <p>Add the offset between the camera and the IMU. Since the internal time of both devices will never be fully synced there will always be an offset between the two.</p>

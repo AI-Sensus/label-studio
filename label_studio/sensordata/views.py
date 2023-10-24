@@ -7,6 +7,9 @@ from .parsing.sensor_data import SensorDataParser
 from .parsing.video_metadata import VideoMetaData
 from .parsing.controllers.project_controller import ProjectController
 from pathlib import Path
+from .utils.annotation_template import create_offset_annotation_template
+from tasks.models import Task, Annotation
+from sensormodel.models import Subject
 
 import json
 from datetime import timedelta
@@ -15,6 +18,7 @@ from rest_framework.authtoken.models import Token
 import requests
 from tempfile import NamedTemporaryFile
 import numpy as np
+import statistics
 import pandas as pd
 import zipfile
 import re
@@ -122,8 +126,9 @@ def parse_IMU(request, file_path, sensor, name, project):
         imu_df['A3D'] = np.sqrt(imu_df['Ax']**2 + imu_df['Ay']**2 + imu_df['Az']**2)
     except KeyError as e:
         print(print("No Ax, Ay or Az columns. ", e))
+        imu_df['A3D'] = imu_df['Ax']
     # Remove non-letters from column names
-    imu_df.columns = [re.sub(r'[^a-zA-Z]', '', col) for col in imu_df.columns]
+    imu_df.columns = [re.sub(r'[^a-zA-Z0-9]', '', col) for col in imu_df.columns]
     # Now that the sensordata has been parsed it has to be transformed back to a .csv file and uploaded to the correct project
     # Create NamedTemporary file of type csv
     with NamedTemporaryFile(suffix='.csv', prefix=(str(name).split('/')[-1]) ,mode='w', delete=False) as csv_file:
@@ -225,7 +230,8 @@ def generate_offset_anno_tasks(request, project_id):
         if offsetannotationform.is_valid():
             sync_sensordata = offsetannotationform.cleaned_data.get('sync_sensordata')
             try:
-                sensortype_A = SensorData.objects.filter(project=Project.objects.get(id=project_id+1)).first().sensor.sensortype
+                # Get ground truth sensor type from the subject annotation project
+                sensortype_A = SensorData.objects.filter(project__id=project.id+1).first().sensor.sensortype
             except: 
                 print('No sensortypes found in subject annotation project')
             sensortype_B = Sensor.objects.filter(project=project).exclude(sensortype=sensortype_A).first().sensortype
@@ -235,12 +241,25 @@ def generate_offset_anno_tasks(request, project_id):
                     timestamp_column_name = sendata_B_df.columns[sensortype_B.timestamp_column]
                     task_json_template = {
                         "csv": f"{sendata_B.file_upload.file.url}?time={timestamp_column_name}&values={'a3d'}",
-                        "video": f"<video src='{sendata_A.file_upload.file.url}' width='100%' controls onloadeddata=\"setTimeout(function(){{ts=Htx.annotationStore.selected.names.get('ts');t=ts.data.{timestamp_column_name.lower()};v=document.getElementsByTagName('video')[0];w=parseInt(t.length*(5/v.duration));l=t.length-w;ts.updateTR([t[0], t[w]], 1.001);r=$=>ts.brushRange.map(n=>(+n).toFixed(2));_=r();setInterval($=>r().some((n,i)=>n!==_[i])&&(_=r())&&(v.currentTime=v.duration*(r()[0]-t[0])/(t.slice(-1)[0]-t[0]-(r()[1]-r()[0]))),10); console.log('video is loaded, starting to sync with time series')}}, 3000); \" />"
+                        "video": f"<video src='{sendata_A.file_upload.file.url}' width='100%' controls onloadeddata=\"setTimeout(function(){{ts=Htx.annotationStore.selected.names.get('ts');t=ts.data.{timestamp_column_name.lower()};v=document.getElementsByTagName('video')[0];w=parseInt(t.length*(5/v.duration));l=t.length-w;ts.updateTR([t[0], t[w]], 1.001);r=$=>ts.brushRange.map(n=>(+n).toFixed(2));_=r();setInterval($=>r().some((n,i)=>n!==_[i])&&(_=r())&&(v.currentTime=v.duration*(r()[0]-t[0])/(t.slice(-1)[0]-t[0]-(r()[1]-r()[0]))),100); console.log('video is loaded, starting to sync with time series')}}, 3000); \" />",
+                        "sensor_a": f"{sendata_A.sensor}",
+                        "sensor_b": f"{sendata_B.sensor}",
+                        "offset_date": f"{min(sendata_A.begin_datetime,sendata_B.begin_datetime)}"
                     }
                     with NamedTemporaryFile(prefix=f'{sendata_A.sensor.id}_{sendata_B.sensor.id}', suffix='.json',mode='w',delete=False) as task_json_file:
                         json.dump(task_json_template,task_json_file,indent=4)
                     upload_sensor_data(request, name=f'{sendata_A.sensor}_{sendata_B.sensor}', file_path=task_json_file.name, project=offset_annotation_project)
-                    
+            # Update labeling setup to support offset annotation
+            # Create a XML markup for annotating. Value column is always 'a3d'
+            template = create_offset_annotation_template(timestamp_column_name=timestamp_column_name,value_column_name='a3d')
+            # Get url for displaying project detail
+            project_detail_url = request.build_absolute_uri(reverse('projects:api:project-detail', args=[project.id+3]))
+            # Update labeling set up
+            token = Token.objects.get(user=request.user)
+            requests.patch(project_detail_url, headers={'Authorization': f'Token {token}'}, data={'label_config':template})        
+            tasks_url = reverse('data_manager:project-data', kwargs={'pk':project.id+3})
+            return redirect(tasks_url)
+        else:
             sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
             offsetannotationform = OffsetAnnotationForm(project=project)
             return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project}) 
@@ -248,3 +267,46 @@ def generate_offset_anno_tasks(request, project_id):
         sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
         offsetannotationform = OffsetAnnotationForm(project=project)
         return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project}) 
+    
+
+def parse_offset_annotations(request,project_id):
+    project = Project.objects.get(id=project_id)
+    offset_anno_proj = Project.objects.get(id=project.id+3)
+    tasks = Task.objects.filter(project= offset_anno_proj)
+    for task in tasks:
+        sensor_A = Sensor.objects.get(sensor_id = task.data['sensor_a'].replace('Sensor: ', ''))
+        sensor_B = Sensor.objects.get(sensor_id = task.data['sensor_b'].replace('Sensor: ', ''))
+        annotations = Annotation.objects.filter(task__in= tasks)
+        if annotations.first().result[0]['value']['timeserieslabels'][0] == 'Negative offset':
+            offsets = [annotation_result['value']['end']-annotation_result['value']['start']  for annotation_result in annotations.first().result]
+            try:
+                avg_offset = statistics.mean(offsets) # avg offset as a float in seconds
+            except statistics.StatisticsError as e:
+                print(f'{e}, There are no offset annotations for {sensor_A} and {sensor_B}')
+            offset_date = task.data['offset_date']
+            if not SensorOffset.objects.filter(sensor_A = sensor_A, sensor_B = sensor_B, offset = -1*avg_offset, offset_Date = offset_date):
+                SensorOffset.objects.create(sensor_A = sensor_A,
+                                               sensor_B = sensor_B,
+                                               offset = -1*int(avg_offset*1000), # convert to milliseconds integer
+                                               offset_Date = offset_date)
+        elif annotations.first().result[0]['value']['timeserieslabels'][0] == 'Positive offset':
+            
+            offsets = [annotation_result['value']['end']-annotation_result['value']['start']  for annotation_result in annotations.first().result]
+            print(offsets)
+            try:
+                avg_offset = statistics.mean(offsets) # avg offset as a float in seconds
+            except statistics.StatisticsError as e:
+                print(f'{e}, There are no offset annotations for {sensor_A} and {sensor_B}')
+            offset_date = task.data['offset_date'] 
+            if not SensorOffset.objects.filter(sensor_A = sensor_A, sensor_B = sensor_B, offset = -1*avg_offset, offset_Date = offset_date):
+                SensorOffset.objects.create(sensor_A = sensor_A,
+                                               sensor_B = sensor_B,
+                                               offset = int(avg_offset*1000), # convert to milliseconds integer
+                                               offset_Date = offset_date)
+        else:
+            print('The labels in the offset labeling have been changed. This will cause malfunctioning')
+    sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
+    offsetannotationform = OffsetAnnotationForm(project=project)
+    return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project}) 
+    
+            
