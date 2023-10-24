@@ -292,7 +292,6 @@ def parse_offset_annotations(request,project_id):
         elif annotations.first().result[0]['value']['timeserieslabels'][0] == 'Positive offset':
             
             offsets = [annotation_result['value']['end']-annotation_result['value']['start']  for annotation_result in annotations.first().result]
-            print(offsets)
             try:
                 avg_offset = statistics.mean(offsets) # avg offset as a float in seconds
             except statistics.StatisticsError as e:
