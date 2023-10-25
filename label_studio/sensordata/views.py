@@ -246,7 +246,7 @@ def generate_offset_anno_tasks(request, project_id):
                     timestamp_column_name = sendata_B_df.columns[sensortype_B.timestamp_column]
                     task_json_template = {
                         "csv": f"{sendata_B.file_upload.file.url}?time={timestamp_column_name}&values={'a3d'}",
-                        "video": f"<video src='{sendata_A.file_upload.file.url}' width='100%' controls onloadeddata=\"setTimeout(function(){{ts=Htx.annotationStore.selected.names.get('ts');t=ts.data.{timestamp_column_name.lower()};v=document.getElementsByTagName('video')[0];w=parseInt(t.length*(5/v.duration));l=t.length-w;ts.updateTR([t[0], t[w]], 1.001);r=$=>ts.brushRange.map(n=>(+n).toFixed(2));_=r();setInterval($=>r().some((n,i)=>n!==_[i])&&(_=r())&&(v.currentTime=v.duration*(r()[0]-t[0])/(t.slice(-1)[0]-t[0]-(r()[1]-r()[0]))),100); console.log('video is loaded, starting to sync with time series')}}, 3000); \" />",
+                        "video": f"<video src='{sendata_A.file_upload.file.url}' width='100%' controls onloadeddata=\"setTimeout(function(){{ts=Htx.annotationStore.selected.names.get('ts');t=ts.data.{timestamp_column_name.lower()};v=document.getElementsByTagName('video')[0];w=parseInt(t.length*(5/v.duration));l=t.length-w;ts.updateTR([t[0], t[w]], 1.001);r=$=>ts.brushRange.map(n=>(+n).toFixed(2));_=r();setInterval($=>r().some((n,i)=>n!==_[i])&&(_=r())&&(v.currentTime=v.duration*(r()[0]-t[0])/(t.slice(-1)[0]-t[0]-(r()[1]-r()[0]))),20); console.log('video is loaded, starting to sync with time series')}}, 3000); \" />",
                         "sensor_a": f"{sendata_A.sensor}",
                         "sensor_b": f"{sendata_B.sensor}",
                         "offset_date": f"{min(sendata_A.begin_datetime,sendata_B.begin_datetime)}"
