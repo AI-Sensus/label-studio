@@ -84,9 +84,10 @@ def process_sensor_file(request, file_path, sensor, name, project):
 
 def offset(request, project_id):
     project = Project.objects.get(id=project_id)
+    offset_annotation_project = Project.objects.get(id=project.id+3)
     sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
     offsetannotationform = OffsetAnnotationForm(project=project)
-    return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project})
+    return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project, 'offset_project': offset_annotation_project})
 
 def delete_offset(request, project_id, id):
     project = Project.objects.get(id=project_id)
@@ -129,6 +130,10 @@ def parse_IMU(request, file_path, sensor, name, project):
         imu_df['A3D'] = imu_df['Ax']
     # Remove non-letters from column names
     imu_df.columns = [re.sub(r'[^a-zA-Z0-9]', '', col) for col in imu_df.columns]
+    # Remove last line (=stopping line)
+    imu_df.drop(imu_df.index[-1], inplace=True)
+    # Convert all time entries to float
+    imu_df.iloc[:,sensortype.timestamp_column] = imu_df.iloc[:,sensortype.timestamp_column].astype(float)
     # Now that the sensordata has been parsed it has to be transformed back to a .csv file and uploaded to the correct project
     # Create NamedTemporary file of type csv
     with NamedTemporaryFile(suffix='.csv', prefix=(str(name).split('/')[-1]) ,mode='w', delete=False) as csv_file:
@@ -256,23 +261,22 @@ def generate_offset_anno_tasks(request, project_id):
             project_detail_url = request.build_absolute_uri(reverse('projects:api:project-detail', args=[project.id+3]))
             # Update labeling set up
             token = Token.objects.get(user=request.user)
-            requests.patch(project_detail_url, headers={'Authorization': f'Token {token}'}, data={'label_config':template})        
-            tasks_url = reverse('data_manager:project-data', kwargs={'pk':project.id+3})
-            return redirect(tasks_url)
+            requests.patch(project_detail_url, headers={'Authorization': f'Token {token}'}, data={'label_config':template})
+            return redirect(reverse('data_manager:project-data', kwargs={'pk':project.id+3}))
         else:
             sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
             offsetannotationform = OffsetAnnotationForm(project=project)
-            return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project}) 
+            return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project, 'offset_project':offset_annotation_project}) 
     else:
         sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
         offsetannotationform = OffsetAnnotationForm(project=project)
-        return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project}) 
+        return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project, 'offset_project': offset_annotation_project}) 
     
 
 def parse_offset_annotations(request,project_id):
     project = Project.objects.get(id=project_id)
-    offset_anno_proj = Project.objects.get(id=project.id+3)
-    tasks = Task.objects.filter(project= offset_anno_proj)
+    offset_annotation_project = Project.objects.get(id=project.id+3)
+    tasks = Task.objects.filter(project= offset_annotation_project)
     for task in tasks:
         sensor_A = Sensor.objects.get(sensor_id = task.data['sensor_a'].replace('Sensor: ', ''))
         sensor_B = Sensor.objects.get(sensor_id = task.data['sensor_b'].replace('Sensor: ', ''))
@@ -284,7 +288,7 @@ def parse_offset_annotations(request,project_id):
             except statistics.StatisticsError as e:
                 print(f'{e}, There are no offset annotations for {sensor_A} and {sensor_B}')
             offset_date = task.data['offset_date']
-            if not SensorOffset.objects.filter(sensor_A = sensor_A, sensor_B = sensor_B, offset = -1*avg_offset, offset_Date = offset_date):
+            if not SensorOffset.objects.filter(sensor_A = sensor_A, sensor_B = sensor_B, offset = -1*int(avg_offset*1000), offset_Date = offset_date):
                 SensorOffset.objects.create(sensor_A = sensor_A,
                                                sensor_B = sensor_B,
                                                offset = -1*int(avg_offset*1000), # convert to milliseconds integer
@@ -297,7 +301,7 @@ def parse_offset_annotations(request,project_id):
             except statistics.StatisticsError as e:
                 print(f'{e}, There are no offset annotations for {sensor_A} and {sensor_B}')
             offset_date = task.data['offset_date'] 
-            if not SensorOffset.objects.filter(sensor_A = sensor_A, sensor_B = sensor_B, offset = -1*avg_offset, offset_Date = offset_date):
+            if not SensorOffset.objects.filter(sensor_A = sensor_A, sensor_B = sensor_B, offset = int(avg_offset*1000), offset_Date = offset_date).exists():
                 SensorOffset.objects.create(sensor_A = sensor_A,
                                                sensor_B = sensor_B,
                                                offset = int(avg_offset*1000), # convert to milliseconds integer
@@ -306,6 +310,6 @@ def parse_offset_annotations(request,project_id):
             print('The labels in the offset labeling have been changed. This will cause malfunctioning')
     sensoroffset = SensorOffset.objects.all().order_by('offset_Date')
     offsetannotationform = OffsetAnnotationForm(project=project)
-    return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project}) 
+    return render(request, 'offset.html', {'offsetannotationform':offsetannotationform, 'sensoroffset':sensoroffset, 'project':project , 'offset_project': offset_annotation_project}) 
     
             

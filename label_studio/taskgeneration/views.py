@@ -55,7 +55,7 @@ def create_task_pairs(request, project, subject, sensortype_B):
                 if SensorOffset.objects.filter(sensor_A=sensor_A,sensor_B=sensor_B):
                     # Take the latest instance of offset before the begin_datetime of the sendata_A 
                     offset = SensorOffset.objects.filter(sensor_A=sensor_A,sensor_B=sensor_B,
-                                                        offset_Date__lt=vid_beg_dt).order_by('-offset_Date').first().offset
+                                                        offset_Date__lte=vid_beg_dt).order_by('-offset_Date').first().offset
                 else:
                     # If there is no SensorOffset defined set offset=0
                     offset = 0
@@ -123,6 +123,7 @@ def create_annotation_data_chunks(request, project, subject, duration,value_colu
             imu_df = pd.read_csv(imu_file_path,skipfooter=1, engine='python')
             # Get column names for showing in LS
             timestamp_column_name = imu_df.columns[timestamp_column]
+            print(imu_df.columns)
             value_column_name = imu_df.columns[int(value_column)]
             # Update labeling set up in activity annotion project
             # Create a XML markup for annotating
@@ -132,8 +133,6 @@ def create_annotation_data_chunks(request, project, subject, duration,value_colu
             # Update labeling set up
             token = Token.objects.get(user=request.user)
             requests.patch(project_detail_url, headers={'Authorization': f'Token {token}'}, data={'label_config':template})
-            # Convert all time entries to float
-            imu_df.iloc[:-1,timestamp_column] = imu_df.iloc[:-1,timestamp_column].astype(float)
 
             for i, segment in enumerate(range(amount_of_segments)):
                 # Determine start and end of segment in seconds for both sensors

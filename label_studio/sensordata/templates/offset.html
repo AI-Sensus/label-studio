@@ -64,8 +64,13 @@
         </form>
     </div>
     <div class="buttons">
+        <form action="{% url 'data_manager:project-data' offset_project.id %}">
+            <input type="submit" value="Go to offset annotation project" style="background-color: #c4862b; width:50%"/>
+        </form>
+    </div>
+    <div class="buttons">
         <form action="{% url 'sensordata:parse_offset' project.id %}">
-            <input type="submit" value="Synchronize offset annotations" style="background-color: #c4862b; width:25%"/>
+            <input type="submit" value="Parse offset annotations " style="background-color: #c4862b; width:50%"/>
         </form>
     </div>
     <div class="sensoroffset">
