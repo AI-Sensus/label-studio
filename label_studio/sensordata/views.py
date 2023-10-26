@@ -23,6 +23,7 @@ import fnmatch
 import zipfile
 from django.http import HttpResponseBadRequest
 from projects.models import Project
+from tasks.models import Task
 
 
 UNITS = {'days': 86400, 'hours': 3600, 'minutes': 60, 'seconds':1, 'milliseconds':0.001}
@@ -36,7 +37,7 @@ def sensordatapage(request, project_id):
 def addsensordata(request, project_id):
     project = Project.objects.get(id=project_id)
     if request.method =='POST':
-        sensordataform = SensorDataForm(request.POST, request.FILES)
+        sensordataform = SensorDataForm(request.POST, request.FILES, project=project)
         if sensordataform.is_valid():
             # Get form data
             name = sensordataform.cleaned_data['name']
@@ -63,7 +64,7 @@ def addsensordata(request, project_id):
             # Raise an exception if the uploaded file is not a zip file
             raise ValueError("Uploaded file must be a zip file.")
     else:
-        sensordataform = SensorDataForm()
+        sensordataform = SensorDataForm(project=project)
 
     return render(request, 'addsensordata.html', {'sensordataform': sensordataform, 'project':project})
 
@@ -75,7 +76,7 @@ def process_sensor_file(request, file_path, sensor, name, project):
         parse_IMU(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
     elif sensortype.sensortype == 'C':  # Camera sensor type
         parse_camera(request=request, file_path=file_path,sensor=sensor,name=name,project=project)
-        parse_camera(request=request, file_path=file_path,sensor=sensor,name=name, project=subjectannotation_project)
+        #parse_camera(request=request, file_path=file_path,sensor=sensor,name=name, project=subjectannotation_project)
     elif sensortype.sensortype == 'M':  # Other sensor type (add handling logic here)
         pass
     # Add handling for other sensor types as needed
@@ -173,13 +174,15 @@ def parse_IMU(request, file_path, sensor, name, project):
 
 
 def parse_camera(request, file_path, sensor, name, project):
+    subjectannotation_project = Project.objects.get(id=(project.id+1))
     # Upload video to project
     upload_sensor_data(request=request, name=name, file_path=file_path ,project=project)
+    # Upload video to subjectannotation project
+    upload_sensor_data(request=request, name=name, file_path=file_path ,project=subjectannotation_project)
     # Retrieve id of the FileUpload object that just got created. This is the latest created instance of the class FileUpload
     fileupload_model = apps.get_model(app_label='data_import', model_name='FileUpload')
-    file_upload = fileupload_model.objects.latest('id')
-    
-
+    file_upload_dataimport = fileupload_model.objects.filter(project=project).latest('id')
+    file_upload_subjectannotation = fileupload_model.objects.filter(project=subjectannotation_project).latest('id')
     
     # Get sensortype config
     sensortype = SensorType.objects.get(id=sensor.sensortype.id)
@@ -196,7 +199,7 @@ def parse_camera(request, file_path, sensor, name, project):
 
     # Create SensorData object with parsed data
     sensordata = SensorData.objects.create(name=name, sensor=sensor,\
-        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project, file_upload=file_upload)
+        begin_datetime=begin_datetime, end_datetime=end_datetime, project=project, file_upload=file_upload_dataimport, file_upload_project2 = file_upload_subjectannotation)
     
 def upload_sensor_data(request, name, file_path, project):
     user = request.user
@@ -208,15 +211,51 @@ def upload_sensor_data(request, name, file_path, project):
     # Import the video to the correct project
     import_req = requests.post(import_url, headers={'Authorization': f'Token {token}'}, files=files)
 
-
 def deletesensordata(request, project_id, id):
-    project = Project.objects.get(id=project_id)
-    sensordata = SensorData.objects.get(id=id)           
-    if request.method == 'POST':
-        # Send POST to delete a sensor
+    try:
+        project = Project.objects.get(id=project_id)
+        sensordata = SensorData.objects.get(id=id)
         
-        sensordata.delete()
-        return redirect('sensordata:sensordatapage', project_id=project_id)
-    else:
-        # Go to delete confirmation page
-        return render(request, 'deleteconfirmation.html', {'project':project})             
+        if request.method == 'POST':
+            # Delete related tasks with the same file_upload and project
+            data_tasks = Task.objects.filter(
+                file_upload=sensordata.file_upload,
+                project=project
+            )
+            
+            data_tasks.delete()
+            
+            # Get the path to the physical data file
+            data_file_path = sensordata.file_upload.file.path
+
+            # Delete the physical data file
+            if os.path.exists(data_file_path):
+                os.remove(data_file_path)
+
+            # Check if file_upload_project2 exists and delete associated tasks and file
+            if sensordata.file_upload_project2:
+                new_project_id = project_id + 1
+                subject_project = Project.objects.get(id=new_project_id)
+                subject_tasks = Task.objects.filter(
+                    file_upload=sensordata.file_upload_project2,
+                    project=subject_project
+                )
+                subject_tasks.delete()
+
+                data_file_path_2 = sensordata.file_upload_project2.file.path
+                if os.path.exists(data_file_path_2):
+                    print('deleted')
+                    os.remove(data_file_path_2)
+
+            # Delete the SensorData object
+            sensordata.delete()
+            
+            return redirect('sensordata:sensordatapage', project_id=project_id)
+        else:
+            # Go to delete confirmation page
+            return render(request, 'deleteconfirmation.html', {'project': project})
+    except (Project.DoesNotExist, SensorData.DoesNotExist):
+        raise ValueError("Project or SensorData does not exist.")
+
+
+           

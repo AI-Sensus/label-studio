@@ -15,7 +15,7 @@ def deployment(request, project_id):
     deployments = Deployment.objects.filter(project=project).order_by('begin_datetime')
     
     if request.method == 'POST':
-        deploymentform = forms.DeploymentForm(request.POST, project=project)  # Provide the project argument only once
+        deploymentform = forms.DeploymentForm(request.POST, project=project)  
         if deploymentform.is_valid():
             deployment = deploymentform.save(commit=False)
             deployment.project = project
@@ -46,7 +46,7 @@ def subject(request, project_id):
     project = Project.objects.get(id=project_id)
     subjects = Subject.objects.filter(project=project).order_by('name')
     if request.method == 'POST':
-        subjectform = forms.SubjectForm(request.POST)
+        subjectform = forms.SubjectForm(request.POST, project=project)
         if subjectform.is_valid():
             subject = subjectform.save(commit=False)
             subject.project = project
