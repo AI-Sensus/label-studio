@@ -105,7 +105,7 @@ jobs:
           fetch-depth: 1
           ref: ${{ github.event.client_payload.commit_sha }}
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: "${{ env.NODE }}"
 
