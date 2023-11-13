@@ -1,4 +1,4 @@
-def create_activity_annotation_template(timestamp_column_name,value_column_name,subject):
+def create_activity_annotation_template(subject,timestamp_column_name,value_column_name):
     """
         Function that takes the names of the timestamp and value columns and creates an XML markup with it 
         for activity annotation
