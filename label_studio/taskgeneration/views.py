@@ -141,7 +141,6 @@ def create_annotation_data_chunks(request, project, subject, duration,value_colu
                                                            value_column_name=value_column_name)
             # Get url for displaying project detail
             project_detail_url = request.build_absolute_uri(reverse('projects:api:project-detail', args=[project.id+2]))
-            print(f'project_detail_url:  {project_detail_url}')
             # Update labeling set up
             token = Token.objects.get(user=request.user)
             requests.patch(project_detail_url, headers={'Authorization': f'Token {token}'}, data={'label_config':template})
@@ -157,7 +156,6 @@ def create_annotation_data_chunks(request, project, subject, duration,value_colu
                     end_segment_A = begin_segment_A +duration
                     begin_segment_B = longest_overlap.start_B+ duration*segment
                     end_segment_B = begin_segment_B +duration
-
     
                 with NamedTemporaryFile(prefix="CHUNK", suffix=".mp4", delete=False, mode='w') as temp_video,\
                     NamedTemporaryFile(prefix="CHUNK", suffix=".csv", delete=False, mode='w') as temp_imu:
@@ -184,10 +182,9 @@ def create_annotation_data_chunks(request, project, subject, duration,value_colu
                     # Only keep the rows in between the obtained indeces
                     segment_imu_df = imu_df.iloc[start_index:end_index]
                     # Add offset to every timestamp so that everthing shifts s.t. start time is 0
-                    segment_imu_df.iloc[:, timestamp_column] = segment_imu_df.iloc[:, timestamp_column] - segment_imu_df.iloc[0, timestamp_column]
+                    segment_imu_df.iloc[:, timestamp_column].subtract(segment_imu_df.iloc[0, timestamp_column])
                     # Create temporary file and save new csv to this file
-                    segment_imu_df.to_csv(temp_imu, index=False)
-                    
+                    segment_imu_df.to_csv(temp_imu.name, index=False)
                     upload_sensor_data(request=request, name=f'imu_segment_{i}', file_path=temp_imu.name ,project=project)
                     fileupload_model = apps.get_model(app_label='data_import', model_name='FileUpload')
                     imu_file_upload = fileupload_model.objects.latest('id')
@@ -200,7 +197,7 @@ def create_annotation_data_chunks(request, project, subject, duration,value_colu
                     activity_annotation_project = Project.objects.get(id=project.id+2)
                     task_json_template = {
                         "csv": f"{imu_file_upload.file.url}?time={timestamp_column_name}&values={value_column_name}",
-                        "video": f"<video src='{video_file_upload.file.url}' width='100%' controls onloadeddata=\"setTimeout(function(){{ts=Htx.annotationStore.selected.names.get('ts');t=ts.data.{timestamp_column_name.lower()};v=document.getElementsByTagName('video')[0];w=parseInt(t.length*(5/v.duration));l=t.length-w;ts.updateTR([t[0], t[w]], 1.001);r=$=>ts.brushRange.map(n=>(+n).toFixed(2));_=r();setInterval($=>r().some((n,i)=>n!==_[i])&&(_=r())&&(v.currentTime=v.duration*(r()[0]-t[0])/(t.slice(-1)[0]-t[0]-(r()[1]-r()[0]))),{refresh_every}); console.log('video is loaded, starting to sync with time series')}}, {wait_before_sync}); \" />",
+                        "video": f"<video src='{video_file_upload.file.url}' width='100%' controls onloadeddata=\"setTimeout(function(){{ts=Htx.annotationStore.selected.names.get('ts');t=ts.data.{timestamp_column_name.lower()};v=document.getElementsByTagName('video')[0];w=parseInt(t.length*(5/v.duration));l=t.length-w;ts.updateTR([t[0], t[w]], 1.001);r=$=>ts.brushRange.map(n=>(+n).toFixed(2));_=r();setInterval($=>r().some((n,i)=>n!==_[i])&&(_=r())&&(v.currentTime=r()[0]),{refresh_every}); console.log('video is loaded, starting to sync with time series')}}, {wait_before_sync}); \" />",
                         "subject": f"{subject}"
                     }
                     with NamedTemporaryFile(prefix=f'segment_{i}_', suffix='.json',mode='w',delete=False) as task_json_file:
