@@ -336,22 +336,14 @@ def create_sync_task_pairs(project, sensordata_A, sensordata_B):
                 else:
                     end_overlap_dt = B_end_dt   
                 # Create overlap object, this is used to create tasks
-                if not SyncSensorOverlap.objects.filter(sensordata_A=sendata_A,
-                                            sensordata_B=sendata_B,
-                                            project=project,
-                                            start_A= (begin_overlap_dt-A_beg_dt).total_seconds(),
-                                            end_A = (end_overlap_dt-A_beg_dt).total_seconds(),
-                                            start_B = (begin_overlap_dt-B_beg_dt).total_seconds(),
-                                            end_B = (end_overlap_dt-B_beg_dt).total_seconds()
-                                            ).exists():
-                    SyncSensorOverlap.objects.create(sensordata_A=sendata_A,
-                                                sensordata_B=sendata_B,
-                                                project=project,
-                                                start_A= (begin_overlap_dt-A_beg_dt).total_seconds(),
-                                                end_A = (end_overlap_dt-A_beg_dt).total_seconds(),
-                                                start_B = (begin_overlap_dt-B_beg_dt).total_seconds(),
-                                                end_B = (end_overlap_dt-B_beg_dt).total_seconds()
-                                                )   
+                SyncSensorOverlap.objects.create(sensordata_A=sendata_A,
+                                                 sensordata_B=sendata_B,
+                                                 project=project,
+                                                 start_A= (begin_overlap_dt-A_beg_dt).total_seconds(),
+                                                 end_A = (end_overlap_dt-A_beg_dt).total_seconds(),
+                                                 start_B = (begin_overlap_dt-B_beg_dt).total_seconds(),
+                                                 end_B = (end_overlap_dt-B_beg_dt).total_seconds()
+                                                 )   
 
 def create_sync_data_chunks(request, project,value_column_name):
     # Get all overlap for given subject and video
@@ -413,8 +405,9 @@ def create_sync_data_chunks(request, project,value_column_name):
                 fileupload_model = apps.get_model(app_label='data_import', model_name='FileUpload')
                 video_file_upload = fileupload_model.objects.latest('id')
                 # Create JSON that allows for synchronization between video and timeseries
-                refresh_every = 10
-                wait_before_sync = 3000
+                # Parameters used in the synchronisation of timeseries and video
+                refresh_every = 10 # Every 10 ms it syncs
+                wait_before_sync = 3000 # In order to wait for the loading of the data, the syncing wait 3000 ms before starting
                 offset_annotation_project = Project.objects.get(id=project.id+3)
                 task_json_template = {
                     "csv": f"{imu_file_upload.file.url}?time={timestamp_column_name}&values={value_column_name.lower()}",
@@ -423,9 +416,9 @@ def create_sync_data_chunks(request, project,value_column_name):
                     "sensor_b": f"{overlap.sensordata_B.sensor}",
                     "offset_date": f"{min(overlap.sensordata_A.begin_datetime,overlap.sensordata_A.begin_datetime)}"
                 }
+                # Upload the JSON to the correct LS project
                 with NamedTemporaryFile(prefix=f'{overlap.sensordata_A.sensor.id}_{overlap.sensordata_B.sensor.id}', suffix='.json',mode='w',delete=False) as task_json_file:
                     json.dump(task_json_template,task_json_file,indent=4)
-
                 upload_sensor_data(request, name=f'sync', file_path=task_json_file.name, project=offset_annotation_project)
             os.remove(temp_imu.name)
             os.remove(temp_video.name)                
