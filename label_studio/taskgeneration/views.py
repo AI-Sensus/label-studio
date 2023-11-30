@@ -46,6 +46,10 @@ def create_task_pairs(project, subject, sensortype_B):
     for sendata_A in sensordata_A:
         sensor_A = sendata_A.sensor
         A_beg_dt = sendata_A.begin_datetime #begin_datetime sendata_A
+        # Add manual offset for either sensor_A (offset is in ms (int))
+        if not sendata_A.sensor.manual_offset is None:
+            sensor_A_manual_offset = sendata_A.sensor.manual_offset
+            A_beg_dt = A_beg_dt + timedelta(milliseconds=sensor_A_manual_offset)
         # Iterate over all subject_presences for this sendata_A
         subject_presences_sendata_A = subject_presences.filter(file_upload=sendata_A.file_upload)
         for subj_pres in subject_presences_sendata_A:
@@ -69,6 +73,11 @@ def create_task_pairs(project, subject, sensortype_B):
                 offset_delta = timedelta(milliseconds=offset) # Difference in datetime because of sensor offset
                 B_beg_dt = sendata_B.begin_datetime-offset_delta
                 B_end_dt = sendata_B.end_datetime-offset_delta
+                # Add manual offset for sensor_B
+                if not sendata_B.sensor.manual_offset is None:
+                    sensor_B_manual_offset = sendata_B.sensor.manual_offset
+                    B_beg_dt = B_beg_dt + timedelta(milliseconds=sensor_B_manual_offset)
+                    B_end_dt = B_end_dt + timedelta(milliseconds=sensor_B_manual_offset)
                 # Check if either the begin or end of sendata_B are in the subj. pres. segment or the begin (of sendata_B) is before and the end (of sendata_B) is after the start of subj. pres.
                 begin_inside =  beg_subj_pres <= B_beg_dt <= end_subj_pres
                 end_inside =   beg_subj_pres <= B_end_dt <= end_subj_pres
