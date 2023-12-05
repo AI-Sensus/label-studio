@@ -394,7 +394,7 @@ def create_sync_data_chunks(request, project,value_column_name):
                 # Only keep the rows in between the obtained indeces
                 imu_df = imu_df.iloc[start_index:end_index]
                 # Add offset to every timestamp so that everthing shifts s.t. start time is 0
-                imu_df.iloc[:, timestamp_column].subtract(imu_df.iloc[0, timestamp_column])
+                imu_df.iloc[:, timestamp_column] = imu_df.iloc[:, timestamp_column].subtract(imu_df.iloc[0, timestamp_column])
                 # Save new csv to this file
                 imu_df.to_csv(temp_imu.name, index=False)
                 # Upload sync chunks to data_import project
