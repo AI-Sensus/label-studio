@@ -407,7 +407,7 @@ def create_sync_data_chunks(request, project,value_column_name):
                 # Create JSON that allows for synchronization between video and timeseries
                 # Parameters used in the synchronisation of timeseries and video
                 refresh_every = 10 # Every 10 ms it syncs
-                wait_before_sync = 3000 # In order to wait for the loading of the data, the syncing wait 3000 ms before starting
+                wait_before_sync = 1500 # In order to wait for the loading of the data, the syncing wait 3000 ms before starting
                 offset_annotation_project = Project.objects.get(id=project.id+3)
                 task_json_template = {
                     "csv": f"{imu_file_upload.file.url}?time={timestamp_column_name}&values={value_column_name.lower()}",
