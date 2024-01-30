@@ -226,7 +226,7 @@ export const Menubar = ({
                   exact
                 />
                 <Menu.Item
-                  label="Dashboard"
+                  label="Project page"
                   to="/landingpage/dashboard"
                   icon={<IconBook/>}
                   data-external
@@ -234,7 +234,7 @@ export const Menubar = ({
                   onClick={handleHomepageItemClick}
                 />  
                 <Menu.Item
-                  label="Project page"
+                  label="Project Dashboard"
                   icon={<IconBook />}
                   data-external
                   exact

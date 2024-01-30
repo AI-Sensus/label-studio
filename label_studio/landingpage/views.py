@@ -10,15 +10,16 @@ from sensordata.models import SensorData
 from .models import MainProject
 from django.http import HttpResponse
 from projects.models import Project
-from .models import MainProject
+from .models import MainProject, ZipFileModel
 from django.http import HttpResponse
 import json
 import zipfile
 from tasks.models import Task, Annotation
 import os, shutil
-
+from io import BytesIO
 from django.http import JsonResponse, HttpResponseNotFound
 from .models import MainProject
+
 
 def landingpage(request, project_id):
     main_project = None
@@ -136,6 +137,7 @@ def deleteProject(request, project_id):
     
 def exportProject(request, project_id):
     project = Project.objects.get(id=project_id)
+    zip_files = ZipFileModel.objects.filter(project=project)
     if request.method == 'POST':          
         # Get current user token for authentication
         user = request.user
@@ -233,6 +235,21 @@ def exportProject(request, project_id):
                     with open(chunk_file_path, 'rb') as f:
                         chunk_data_file.write(f.read())
 
-        return response
+                # Diagnostic message: print the file being added
+                print(f"Adding {chunk_file} to ZIP")
+
+        # Check if zip file with project_title_export_1.zip already exists
+        index = 1
+        while ZipFileModel.objects.filter(zip_file__icontains=f'{project_title}_export_{index}.zip').exists():
+            index += 1
+
+        zip_file_name = f'{project_title}_export_{index}.zip'
+
+        # Save the zip file to the model
+        zip_model = ZipFileModel.objects.create(zip_file=zip_file_name, project_id=project_id)
+        zip_model.zip_file.save(zip_file_name, response)
+
+        return redirect('landingpage:landingpage', project_id=project_id)
+        
     
-    return render(request, 'exportproject.html', {'project':project})
+    return render(request, 'exportproject.html', {'project':project, 'zip_files':zip_files})

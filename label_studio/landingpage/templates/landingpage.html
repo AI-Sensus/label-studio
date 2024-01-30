@@ -11,10 +11,10 @@
 <body>
   <div class="buttons">
     <form action="/landingpage/dashboard">
-      <input type="submit" value="Go back to dashboard" style="background-color: #c4862b; width:25%"/>
+      <input type="submit" value="Go back to project page" style="background-color: #c4862b; width:25%"/>
     </form>
   </div>
-    <h1>{{ main_project }} - overview</h1>
+    <h1>{{ main_project }} - Dashboard</h1>
     <ol>
         <li><a href="{% url 'sensormodel:sensor' main_project.project_id %}">Manage sensors</a></li>
         Manage your project sensors here. Add cameras or IMU sensors to your projects.
@@ -28,10 +28,10 @@
         Here you can annotate the subject presence in your videos. The videos can be annotated with your subjects as labels.
         <li><a href="{% url 'sensordata:offset' main_project.project_id %}">Synchronize sensors</a></li>
         Here you can add the offset between the camera data and the IMU data.
-        <li><a href="{% url 'taskgeneration:generate_form' main_project.project_id %}">Generate activity annnotation tasks</a></li>
+        <li><a href="{% url 'taskgeneration:generate_form' main_project.project_id %}">Create the annotation tasks</a></li>
         Annotate the data using the activity labels. It is only data with subjects present.
-        <li><a href="{% url 'data_manager:project-data' main_project.project_id|add:2 %}">Annotate</a></li>
-        Annotate the data using the activity labels. It is only data with subjects present.
+        <li><a href="{% url 'data_manager:project-data' main_project.project_id|add:2 %}">Annotate activities</a></li>
+        Annotate the data using the activity labels.
         <li><a href="{% url 'landingpage:export-project' main_project.project_id %}">Export annotations</a></li>
         Export your subject and activity annotations.
     </ol>
