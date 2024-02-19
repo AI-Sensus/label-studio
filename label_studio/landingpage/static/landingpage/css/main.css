@@ -1,52 +1,50 @@
-/* Account page */
-
 body {
     --border-color: rgba(0, 0, 0, 0.15);
     --color-error: #d00;
-    display: grid;
-    grid-template: auto / 1fr 1fr;
-    gap: 20px;
-  }
-  table {
-    font-size: 20px;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    text-align: left;
-  }
-  table thead {
-    font-weight: 500;
-  }
-  table td, table th {
-    border: none;
-  }
-  table tbody tr {
-    cursor: pointer;
-  }
-  table tr {
-    background: rgba(0, 0, 0, 0.0001);
-  }
-  table tr.active {
-    box-shadow: 0 0 10px rgb(0 0 0 / 15%);
-  }
-  table tr:nth-child(2n + 1) {
-    background: rgba(0, 0, 0, 0.03);
-  }
-  table thead tr:nth-child(1) {
-    background: transparent;
-  }
-  table td, table th {
-    padding: 0 10px;
-    height: 48px;
-  }
-  
-  button.blinking-status::after {
-    content: "✓";
-    opacity: 0;
-    margin-right: -2em;
-    width: 2em;
-    display: inline-block;
-    transition: 0.3s 1s opacity;
-  }
-  button.blinking-status.blink::after {
-    opacity: 1;
-    transition: none;
-  }
+
+}
+table {
+font-size: 20px;
+border: 1px solid rgba(0, 0, 0, 0.15);
+text-align: left;
+width: 100%; 
+border-collapse: collapse;
+}
+table thead {
+font-weight: 500;
+}
+table td, table th {
+border: none;
+}
+table tbody tr {
+cursor: pointer;
+}
+table tr {
+background: rgba(0, 0, 0, 0.0001);
+}
+table tr.active {
+box-shadow: 0 0 10px rgb(0 0 0 / 15%);
+}
+table tr:nth-child(2n + 1) {
+background: rgba(0, 0, 0, 0.03);
+}
+table thead tr:nth-child(1) {
+background: transparent;
+}
+table td, table th {
+padding: 0 10px;
+height: 48px;
+}
+
+.buttons {
+    display: flex;
+    padding: 10px;
+}
+
+.buttons form input[type="submit"] {
+    width: 300px !important;
+    margin-right: 10px;
+    background-color: #09f !important;
+    box-shadow: inset 0px -1px 0px rgba(0,0,0,0.1);
+    color: white;
+}

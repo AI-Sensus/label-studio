@@ -15,27 +15,45 @@
       <input type="submit" value="Go back to dashboard" style="background-color: #c4862b; width:25%"/>
     </form>
   </div>
-    <h1>{{ main_project }} - overview</h1>
-    <ol>
-        <li><a href="{% url 'sensormodel:sensor' main_project.project_id %}">Manage sensors</a></li>
-        Manage your project sensors here. Add cameras or IMU sensors to your projects.
-        <li><a href="{% url 'sensormodel:subject' main_project.project_id %}">Manage subjects</a></li>
-        Manage your project subjects here. Here, you can add and edit the subjects used in your projects.
-        <li><a href="{% url 'sensormodel:deployment' main_project.project_id %}">Manage deployments</a></li>
-        Manage your project deployments here. This gives an overview of the deployments of your sensors to your subjects.
-        <li><a href="{% url 'sensordata:sensordatapage' main_project.project_id %}">Manage data</a></li>
-        Manage your experimental data here. Here you can add zip files with your IMU or camera data to the project.
-        <li><a href="{% url 'sensordata:offset' main_project.project_id %}">Synchronize sensors</a></li>
-        Here you can add the offset between the camera data and the IMU data.
-        <li><a href="{% url 'subjectannotation:annotationtaskpage' main_project.project_id %}">Annotate subject presence</a></li>
-        Here you can annotate the subject presence in your videos. The videos can be annotated with your subjects as labels.
-        <li><a href="{% url 'taskgeneration:generate_form' main_project.project_id %}">Generate activity annnotation tasks</a></li>
-        Annotate the data using the activity labels. It is only data with subjects present.
-        <li><a href="{% url 'data_manager:project-data' main_project.project_id|add:2 %}">Annotate</a></li>
-        Annotate the data using the activity labels. It is only data with subjects present.
-        <li><a href="{% url 'landingpage:export-project' main_project.project_id %}">Export annotations</a></li>
-        Export your subject and activity annotations.
-    </ol>
+  <h1>{{ main_project }} - overview</h1>
+  <table>
+    <tr>
+      <td><a href="{% url 'sensormodel:sensor' main_project.project_id %}">Manage sensors</a></td>
+      <td>Manage your project sensors here. Add cameras or IMU sensors to your projects.</td>
+    </tr>
+    <tr>
+      <td><a href="{% url 'sensormodel:subject' main_project.project_id %}">Manage subjects</a></td>
+      <td>Manage your project subjects here. Here, you can add and edit the subjects used in your projects.</td>
+    </tr>
+    <tr>
+      <td><a href="{% url 'sensormodel:deployment' main_project.project_id %}">Manage deployments</a></td>
+      <td>Manage your project deployments here. This gives an overview of the deployments of your sensors to your subjects.</td>
+    </tr>
+    <tr>
+      <td><a href="{% url 'sensordata:sensordatapage' main_project.project_id %}">Manage data</a></td>
+      <td>Manage your experimental data here. Here you can add zip files with your IMU or camera data to the project.</td>
+    </tr>
+    <tr>
+      <td><a href="{% url 'sensordata:offset' main_project.project_id %}">Synchronize sensors</a></td>
+      <td>Here you can add the offset between the camera data and the IMU data.</td>
+    </tr>
+    <tr>
+      <td><a href="{% url 'subjectannotation:annotationtaskpage' main_project.project_id %}">Annotate subject presence</a></td>
+      <td>Here you can annotate the subject presence in your videos. The videos can be annotated with your subjects as labels.</td>
+    </tr>
+    <tr>
+      <td><a href="{% url 'taskgeneration:generate_form' main_project.project_id %}">Generate activity annnotation tasks</a></td>
+      <td>Annotate the data using the activity labels. It is only data with subjects present.</td>
+    </tr>
+    <tr>
+      <td><a href="{% url 'data_manager:project-data' main_project.project_id|add:2 %}">Annotate</a></td>
+      <td>Annotate the data using the activity labels. It is only data with subjects present.</td>
+    </tr>
+    <tr>
+      <td><a href="{% url 'landingpage:export-project' main_project.project_id %}">Export annotations</a></td>
+      <td>Export your subject and activity annotations.</td>
+    </tr>
+  </table>
 </body>
 
 {% endblock %}
