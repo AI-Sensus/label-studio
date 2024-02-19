@@ -337,7 +337,10 @@ STATIC_URL = '/static/'
 logger.info(f'=> Static URL is set to: {STATIC_URL}')
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_build')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'sensormodel', 'static')
+    ]
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
