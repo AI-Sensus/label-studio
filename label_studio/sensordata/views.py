@@ -182,7 +182,7 @@ def parse_IMU(request, file_path, sensor, name, project):
     # Parse data
 
     project_controller = ProjectController()
-    sensor_data = SensorDataParser(project_controller=project_controller, file_path=Path(file_path),sensor_model_id= sensortype.id)
+    sensor_data = SensorDataParser(project_controller=project_controller, file_path=Path(file_path),sensor_model_id= sensortype.id,timezone=sensor.timezone)
     # Get parsed data
     imu_df = sensor_data.get_data()
     # Add L2 norm of Ax,Ay,Az
@@ -256,7 +256,7 @@ def parse_camera(request, file_path, sensor, name, project):
     
     # Get sensortype config
     sensortype = SensorType.objects.get(id=sensor.sensortype.id)
-    sensor_timezone = sensortype.timezone
+    sensor_timezone = sensor.timezone
     # Parse video meta data
     videometadata = VideoMetaData(file_path=file_path,sensor_timezone=sensor_timezone)
     

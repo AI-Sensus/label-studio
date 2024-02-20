@@ -1,5 +1,6 @@
 from django.db import models
 from projects.models import Project
+import pytz
 
 class SensorType(models.Model):
     SENSOR_CHOICES = (
@@ -24,20 +25,20 @@ class SensorType(models.Model):
     sensor_id_regex = models.CharField(max_length=100, null=True)
     col_names_row = models.IntegerField(default= 1)
     comment_style = models.CharField(max_length=100, null=True)
-
-    #Camera
-    timezone = models.TextField(default='UTC')
     
     def __str__(self):
         return self.manufacturer + '| ' + self.name + '| ' + self.version
 
 class Sensor(models.Model):
+    TIMEZONE_CHOICES = zip(pytz.all_timezones, pytz.all_timezones)
+
     name = models.TextField(max_length=25)
     parsable_sensor_id = models.CharField(max_length=25, default=None, null=True, blank=True)
     sensor_hash = models.CharField(max_length=10,blank=True)
     sensortype = models.ForeignKey(SensorType,on_delete=models.CASCADE, null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
     manual_offset = models.IntegerField(default=0, blank=True, null=True)
+    timezone = models.CharField(max_length=255, default='UTC', choices=TIMEZONE_CHOICES)
 
     def __str__(self):
         return 'Sensor: ' + str(self.name)

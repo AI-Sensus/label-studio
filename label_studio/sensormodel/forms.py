@@ -1,11 +1,12 @@
 from django import forms
 from . import models
 from .models import Deployment, Sensor, Subject
+import pytz
 
 class SensorForm(forms.ModelForm):
     class Meta:
         model = models.Sensor
-        fields = ['name','parsable_sensor_id','sensortype','manual_offset']
+        fields = ['name','parsable_sensor_id','sensortype','manual_offset','timezone']
         widgets = {
             'manual_offset': forms.TextInput(attrs={'placeholder': 'Optional. Give offset in seconds (integer)'}),
         }
