@@ -13,6 +13,7 @@ urlpatterns = [
     path('<int:project_id>/offset/parse/', views.parse_offset_annotations, name='parse_offset'),
     path('<int:project_id>/offset/delete/<int:id>', views.delete_offset, name='delete_offset'),
     path('<int:project_id>/offset/generate_tasks/', views.generate_offset_anno_tasks, name='generate_tasks'),
+    path('<int:project_id>/offset/adjust_manual_offset/<int:id>/', views.adjust_manual_offset, name='manual_offset'),
 
 ]
 

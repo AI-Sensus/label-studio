@@ -16,9 +16,35 @@
         </form>
     </div>
     <div class="forms">
-        <h2>Select the data that is intended for the syncronization of the sensors</h2>
+        <h2>Select the data that is intended for the synchronization of the sensors</h2>
         <form action="{% url 'sensordata:generate_tasks' project.id %}" method="post">
-            {{ offsetannotationform }}
+            {% csrf_token %}
+            <table class="forms">
+                <tr>
+                    <th>Sensor Data</th>
+                    <th>Begin datetime</th>
+                    <th>End datetime</th>
+                    <th>Manual Offset</th>
+                </tr>
+                {% for choice in offsetannotationform.sync_sensordata %}
+                    {% for data in sensor_data %}
+                        {% if forloop.counter == forloop.parentloop.counter %}
+                            <tr>
+                                <td>{{ choice }}</td>
+                                {% if data.sensor.manual_offset %}
+                                    <td>{{ data.begin_datetime_adjusted|date:"Y-m-d H:i:s" }}</td>
+                                    <td>{{ data.end_datetime_adjusted|date:"Y-m-d H:i:s" }}</td>
+                                    <td>{{ data.sensor.manual_offset }} <a href="{% url 'sensordata:manual_offset' project.id data.sensor.id %}"> [Edit] </a></td>
+                                {% else %}
+                                    <td>{{ data.begin_datetime|date:"Y-m-d H:i:s" }}</td>
+                                    <td>{{ data.end_datetime|date:"Y-m-d H:i:s" }}</td>
+                                    <td>0 <a href="{% url 'sensordata:manual_offset' project.id data.sensor.id %}"> [Edit] </a></td>
+                                {% endif %}
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </table>
             <input type="submit" value="Add sensor offset">
         </form>
     </div>

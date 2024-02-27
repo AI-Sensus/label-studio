@@ -53,6 +53,24 @@ class OffsetAnnotationForm(forms.Form):
         super(OffsetAnnotationForm, self).__init__(*args, **kwargs)
 
         if project is not None:
-            self.fields['sync_sensordata'].queryset = SensorData.objects.filter(project=project)
-    
+            queryset = SensorData.objects.filter(project=project)
+            self.fields['sync_sensordata'].queryset = queryset
+
+            # Include additional fields in the queryset
+            # self.fields['sync_sensordata'].queryset = queryset.values(
+            #     'id','name', 'begin_datetime', 'end_datetime', 'sensor__manual_offset'
+            # )
+
    
+class SensorForm(forms.ModelForm):
+    class Meta:
+        model = Sensor
+        fields = ['manual_offset']
+        widgets = {
+            'manual_offset': forms.TextInput(attrs={'placeholder': 'Optional. Give offset in seconds (integer)'}),
+        }
+
+        def __init__(self, *args, **kwargs):
+            project = kwargs.pop('project', None)
+            super(SubjectForm, self).__init__(*args, **kwargs)
+            self.instance.project = project
