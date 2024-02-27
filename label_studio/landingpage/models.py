@@ -10,6 +10,7 @@ class MainProject(models.Model):
         return 'Project: ' + self.name
     
 class ZipFileModel(models.Model):
+    name = models.CharField(max_length=10000, null=True)
     zip_file = models.FileField(upload_to='zip_files/')
     project = models.ForeignKey(Project, on_delete=models.CASCADE)  # Assuming Project is your existing model
     created_at = models.DateTimeField(auto_now_add=True)

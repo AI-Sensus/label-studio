@@ -239,13 +239,13 @@ def exportProject(request, project_id):
 
         # Check if zip file with project_title_export_1.zip already exists
         index = 1
-        while ZipFileModel.objects.filter(zip_file__icontains=f'{project_title}_export_{index}.zip').exists():
+        while ZipFileModel.objects.filter(name=f'{project_title}_export_{index}.zip').exists():
             index += 1
 
         zip_file_name = f'{project_title}_export_{index}.zip'
 
         # Save the zip file path to the model
-        zip_model = ZipFileModel.objects.create(zip_file=zip_file_path, project_id=project_id)
+        zip_model = ZipFileModel.objects.create(name=zip_file_name, zip_file=zip_file_path, project_id=project_id)
         zip_model.zip_file.save(zip_file_name, open(zip_file_path, 'rb'))
 
         return redirect('landingpage:landingpage', project_id=project_id)
@@ -258,7 +258,7 @@ def delete_zipfile(request, project_id, id):
     zipfile = ZipFileModel.objects.get(id=id)
     project = Project.objects.get(id=project_id)
     if request.method == 'POST':
-        zip_file_path = zipfile.zip_file.file.path
+        zip_file_path = zipfile.zip_file
 
         if os.path.exists(zip_file_path):
             print(zip_file_path)
