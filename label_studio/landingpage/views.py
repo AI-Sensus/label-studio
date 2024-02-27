@@ -206,10 +206,9 @@ def exportProject(request, project_id):
         project_title = project.title.replace('_dataimport', '')
 
         # Create a zip file containing both JSON annotations
-        response = HttpResponse(content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename="{project_title}_annotations.zip"'
+        zip_file_path = os.path.join(settings.MEDIA_ROOT, settings.UPLOAD_DIR, str(project_id), f"{project_title}_annotations.zip")
 
-        with zipfile.ZipFile(response, 'w') as zipf:
+        with zipfile.ZipFile(zip_file_path, 'w') as zipf:
             # Create the 'subject_annotations' folder and add the JSON file
             with zipf.open('subject_annotations/subject_annotations.json', 'w') as subject_file:
                 subject_file.write(json.dumps(subject_annotations).encode('utf-8'))
@@ -245,11 +244,30 @@ def exportProject(request, project_id):
 
         zip_file_name = f'{project_title}_export_{index}.zip'
 
-        # Save the zip file to the model
-        zip_model = ZipFileModel.objects.create(zip_file=zip_file_name, project_id=project_id)
-        zip_model.zip_file.save(zip_file_name, response)
+        # Save the zip file path to the model
+        zip_model = ZipFileModel.objects.create(zip_file=zip_file_path, project_id=project_id)
+        zip_model.zip_file.save(zip_file_name, open(zip_file_path, 'rb'))
 
         return redirect('landingpage:landingpage', project_id=project_id)
         
     
     return render(request, 'exportproject.html', {'project':project, 'zip_files':zip_files})
+
+
+def delete_zipfile(request, project_id, id):
+    zipfile = ZipFileModel.objects.get(id=id)
+    project = Project.objects.get(id=project_id)
+    if request.method == 'POST':
+        zip_file_path = zipfile.zip_file.file.path
+
+        if os.path.exists(zip_file_path):
+            print(zip_file_path)
+            os.remove(zip_file_path)
+        else:
+            print('Path not found!')
+        # Send POST to delete a deployment
+        zipfile.delete()
+        return redirect('landingpage:export-project', project_id = project_id)
+    else:
+        # Go to delete confirmation page
+        return render(request, 'deleteZipfile.html', {'project':project})

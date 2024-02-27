@@ -10,4 +10,5 @@ urlpatterns = [
     path('<int:project_id>/delete/', views.deleteProject, name='delete-project'),
     path('<int:project_id>/export_project', views.exportProject, name='export-project'),
     path('<int:project_id>/workinprogress', views.workinprogress, name='workinprogress'),
+    path('<int:project_id>/export_project/delete/<int:id>', views.delete_zipfile, name='delete-zipfile'),
 ]

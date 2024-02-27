@@ -78,7 +78,7 @@
                 <td>{{ zipfile.zip_file }}</td>
                 <td>{{ zipfile.created_at|date:"F d, Y, H:i:s" }}</td>
                 <td><a href="{{ zipfile.zip_file.url }}" download>[Download]</a></td>
-                <td>[Delete]</td>
+                <td><a href="{% url 'landingpage:delete-zipfile' project.id zipfile.id %}">[Delete]</a></td>
             </tr> 
             {% endfor %} 
         </table>
