@@ -20,8 +20,8 @@ class SensorDataForm(forms.Form):
     def clean_file(self):
         uploaded_file = self.cleaned_data.get('file')
         if uploaded_file:
-            if not zipfile.is_zipfile(uploaded_file):
-                raise ValidationError("Uploaded file must be a valid zipfile!")
+            if not (zipfile.is_zipfile(uploaded_file) or uploaded_file.name.lower().endswith('.csv') or uploaded_file.name.lower().endswith('.mp4')):
+                raise ValidationError("Uploaded file must be a valid zipfile or a single mp4 or csv file!")
         return uploaded_file
 
 
