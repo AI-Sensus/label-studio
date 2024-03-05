@@ -8,16 +8,16 @@ from rest_framework.authtoken.models import Token
 from projects.models import Project
 from sensordata.models import SensorData
 from .models import MainProject
-from django.http import HttpResponse
+
 from projects.models import Project
 from .models import MainProject, ZipFileModel
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 import json
 import zipfile
 from tasks.models import Task, Annotation
 import os, shutil
 from io import BytesIO
-from django.http import JsonResponse, HttpResponseNotFound
+from django.http import JsonResponse, HttpResponseNotFound, FileResponse
 from .models import MainProject
 
 
@@ -258,7 +258,7 @@ def delete_zipfile(request, project_id, id):
     zipfile = ZipFileModel.objects.get(id=id)
     project = Project.objects.get(id=project_id)
     if request.method == 'POST':
-        zip_file_path = zipfile.zip_file
+        zip_file_path = zipfile.zip_file.path
 
         if os.path.exists(zip_file_path):
             print(zip_file_path)
@@ -271,3 +271,28 @@ def delete_zipfile(request, project_id, id):
     else:
         # Go to delete confirmation page
         return render(request, 'deleteZipfile.html', {'project':project})
+    
+def download_file(request, project_id, file_path):
+    project = Project.objects.get(id=project_id)
+    # Ensure the file path is valid
+    if os.path.exists(file_path):
+        # Define a generator function to stream the file content
+        def file_iterator(file_path, chunk_size=8192):
+            with open(file_path, 'rb') as file:
+                while True:
+                    chunk = file.read(chunk_size)
+                    if not chunk:
+                        break
+                    yield chunk
+        
+        # Create a StreamingHttpResponse to stream the file content
+        response = StreamingHttpResponse(file_iterator(file_path))
+        
+        # Set the content type (MIME type) of the response
+        response['Content-Type'] = 'application/octet-stream'
+        # Set the content disposition to attachment to force download
+        response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+        return response
+    else:
+        # Return a 404 Not Found response if the file does not exist
+        return HttpResponse(status=404)

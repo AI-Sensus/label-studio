@@ -58,7 +58,7 @@
     <div class="forms">
         <h2>Export project</h2>
         <form id="export-form" enctype="multipart/form-data" action="{% url 'landingpage:export-project' project.id %}" method="post">
-            <input type="submit" value="Export">
+            <input type="submit" value="Create Export">
         </form>
     </div>
     <div id="exporting-message" style="display: none;">
@@ -77,7 +77,7 @@
             <tr>
                 <td>{{ zipfile.name }}</td>
                 <td>{{ zipfile.created_at|date:"F d, Y, H:i:s" }}</td>
-                <td><a href="{{ zipfile.zip_file.url }}" download>[Download]</a></td>
+                <td><a href="{% url 'landingpage:download-file' project.id zipfile.zip_file.path %}" download>[Download]</a></td>
                 <td><a href="{% url 'landingpage:delete-zipfile' project.id zipfile.id %}">[Delete]</a></td>
             </tr> 
             {% endfor %} 

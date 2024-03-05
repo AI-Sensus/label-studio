@@ -11,4 +11,5 @@ urlpatterns = [
     path('<int:project_id>/export_project', views.exportProject, name='export-project'),
     path('<int:project_id>/workinprogress', views.workinprogress, name='workinprogress'),
     path('<int:project_id>/export_project/delete/<int:id>', views.delete_zipfile, name='delete-zipfile'),
+    path('<int:project_id>/export_project/download/<str:file_path>', views.download_file, name='download-file'),
 ]
