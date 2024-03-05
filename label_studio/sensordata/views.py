@@ -59,7 +59,9 @@ def addsensordata(request, project_id):
                         if (file_name.lower().endswith('.csv') or file_name.lower().endswith('.mp4')):  # Check if the file is a CSV or MP4 file
                             if parsable_sensor_id is None or file_validation(zip_ref, file_name, sensor, parsable_sensor_id):
                                 # Extract each file from the zip to a temporary location
+                                
                                 temp_file_path = zip_ref.extract(file_name)
+                                
                                 # Process the individual file
                                 process_sensor_file(request, temp_file_path, sensor, file_name, project)
                                 # Delete the temporary file
@@ -73,26 +75,17 @@ def addsensordata(request, project_id):
                 
                 return redirect('sensordata:sensordatapage', project_id=project_id) 
             elif uploaded_file.name.lower().endswith('.csv') or uploaded_file.name.lower().endswith('.mp4'):
-                print(uploaded_file)
                 if isinstance(uploaded_file, InMemoryUploadedFile):
-                    # Write the contents of the file to a temporary file on disk
-                    file = NamedTemporaryFile(delete=False)
-                    file.write(uploaded_file.read())
-                    file.close()
-                    # Access file path of newly created file
-                    file_path = file.name
+        # Write the contents of the file to a temporary file on disk
+                    with NamedTemporaryFile(delete=False) as temp_file:
+                        for chunk in uploaded_file.chunks():
+                            temp_file.write(chunk)
+                        file_path = temp_file.name
                 else:
-                # If file is not InMemoryUploaded you can use temporary_file_path
+                    # If file is not InMemoryUploaded use temporary_file_path
                     file_path = uploaded_file.temporary_file_path()
-                process_sensor_file(request, file_path, sensor, uploaded_file, project)
+                process_sensor_file(request, file_path, sensor, str(uploaded_file), project)
                 
-                # with NamedTemporaryFile(delete=False) as temp_file:
-                #     temp_file.write(uploaded_file.read())  
-                #     temp_file_path = temp_file.name
-                #     # Process the individual file
-                #     process_sensor_file(request, temp_file_path, sensor, uploaded_file.name, project)
-                #     # Delete the temporary file
-                #     os.remove(temp_file_path)
                 return redirect('sensordata:sensordatapage', project_id=project_id)
             # Raise an exception if the uploaded file is not a zip file
             else:
