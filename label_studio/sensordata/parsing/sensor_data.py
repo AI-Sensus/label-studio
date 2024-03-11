@@ -26,14 +26,14 @@ TIMEZONE_SETTING = 'UTC'
 
 class SensorDataParser:
 
-    def __init__(self, project_controller, file_path: Path, sensor_model_id):
+    def __init__(self, project_controller, file_path: Path, sensor_model_id, timezone):
         # Initialize primitives
         self.file_path = file_path
         self.project_controller = project_controller
         self.sensor_model_id = sensor_model_id
         self.sensor_model = SensorType.objects.get(id=sensor_model_id)
         self.sensor_name = None
-        self.project_timezone = pytz.timezone(SensorType.objects.get(id=sensor_model_id).timezone)
+        self.project_timezone = pytz.timezone(timezone)
         self.metadata = SensorMetadata(file_path=self.file_path, sensor_model=self.sensor_model, sensor_model_id=sensor_model_id,sensor_timezone=self.project_timezone )
         self.col_metadata = dict()
         
