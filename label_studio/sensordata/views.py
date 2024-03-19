@@ -60,7 +60,11 @@ def addsensordata(request, project_id):
                     with zipfile.ZipFile(uploaded_file, 'r') as zip_ref:
                         for file_name in zip_ref.namelist():
                             if (file_name.lower().endswith('.csv') or file_name.lower().endswith('.mp4')):  # Check if the file is a CSV or MP4 file
-                                if parsable_sensor_id is None or file_validation(zip_ref, file_name, sensor, parsable_sensor_id):
+                                # Check if the type sensor matches the datatype
+                                if (sensor.sensortype.sensortype == 'C' and file_name.lower().endswith('.csv')) or (sensor.sensortype.sensortype == 'I' and file_name.lower().endswith('.mp4')):
+                                    # Append the file to list of files with incorrect sensor
+                                    mismatched_files.append(file_name)
+                                elif parsable_sensor_id is None or file_validation(zip_ref, file_name, sensor, parsable_sensor_id):
                                     # Extract each file from the zip to a temporary location
                                     
                                     temp_file_path = zip_ref.extract(file_name)
@@ -76,8 +80,12 @@ def addsensordata(request, project_id):
                     
                 # If the file is a single data file of csv or mp4 type
                 elif uploaded_file.name.lower().endswith('.csv') or uploaded_file.name.lower().endswith('.mp4'):
+                    # Check if the type sensor matches the datatype
+                    if (sensor.sensortype.sensortype == 'C' and uploaded_file.name.lower().endswith('.csv')) or (sensor.sensortype.sensortype == 'I' and uploaded_file.name.lower().endswith('.mp4')):
+                        # Append the file to list of files with incorrect sensor
+                        mismatched_files.append(uploaded_file.name)
                     # Django typically stores files smaller than 5MB as a InMemoryUploadedInstance
-                    if isinstance(uploaded_file, InMemoryUploadedFile):
+                    elif isinstance(uploaded_file, InMemoryUploadedFile):
                         # Write the contents of the file to a temporary file on disk
                         with NamedTemporaryFile(delete=False) as temp_file:
                             # Write chunks of the uploaded file to the temporary file
