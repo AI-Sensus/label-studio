@@ -14,8 +14,21 @@
     <title>Upload not completed</title>
 </head>
 <body>
+    <h2>The following files were not uploaded, since they are already uploaded to this project!</h2>
+    <div class="twice uploaded files">
+        <table class="tables">
+            <tr>
+                <th>Already uploaded files</th>
+            </tr>
+            {% for file_name in already_uploaded %}
+            <tr>
+                <td>{{ file_name }}</td>
+            </tr> 
+            {% endfor %} 
+        </table>
+    </div>
     <h2>The following files were not uploaded, since they do not belong to the chosen sensor!</h2>
-    <div class="files">
+    <div class="mismatched files">
         <table class="tables">
             <tr>
                 <th>Incorrect files</th>

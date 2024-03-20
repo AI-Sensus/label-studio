@@ -25,7 +25,7 @@
                 <th>Sensor data name</th>
                 <th>Begin Date Time</th>
                 <th>End Date Time</th>
-                <th>Project</th>
+                <th>Hash</th>
                 <th>Sensor</th>
                 <th></th>
             </tr>
@@ -34,7 +34,7 @@
                 <td>{{ sendata.name }}</td>
                 <td>{{ sendata.begin_datetime|date:"F d, Y, H:i:s" }}</td>
                 <td>{{ sendata.end_datetime|date:"F d, Y, H:i:s" }}</td>
-                <td>{{ sendata.project}} </td>
+                <td>{{ sendata.file_hash}} </td>
                 <td>{{ sendata.sensor}} </td>
                 <td><a href="{% url 'sensordata:delete' project.id sendata.id %}">[Delete]</a></td>
             </tr> 

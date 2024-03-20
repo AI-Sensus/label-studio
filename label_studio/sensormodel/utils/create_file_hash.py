@@ -13,7 +13,7 @@ def create_file_id(file_path, block_size=256):
 
         file_size = os.path.getsize(file_path)
         start_index = int(file_size / 2)
-        with file_path.open(mode='r') as f:
+        with open(file_path, mode='r') as f:
             f.seek(start_index)
             n = 1
             md5 = hashlib.md5()

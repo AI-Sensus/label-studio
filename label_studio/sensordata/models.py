@@ -10,7 +10,7 @@ class SensorData(models.Model):
     end_datetime = models.DateTimeField(blank=True,null=True)
     file_upload = models.ForeignKey(FileUpload, on_delete=models.CASCADE,blank= True, null=True, related_name='dataimport_file')
     file_upload_project2 = models.ForeignKey(FileUpload, on_delete=models.CASCADE,blank= True, null=True, related_name='subjectannotation_file')
-    file_hash = models.CharField(max_length=10,blank=True,null=True)
+    file_hash = models.CharField(max_length = 50, blank=True,null=True)
     sensor = models.ForeignKey(Sensor,on_delete=models.CASCADE, null=True)
 
     def __str__(self):
