@@ -11,7 +11,7 @@ def create_offset_annotation_template(timestamp_column_name,value_column_name):
     timeserieslabels = '<TimeSeriesLabels name="label" toName="ts"><Label value="Positive offset"/><Label value="Negative offset"/></TimeSeriesLabels>'
     video = '<HyperText name="video" value="$video" inline="true"/>'
     timeseries =   f'<TimeSeries name="ts" value="$csv" valueType="url" timeColumn="{timestamp_column_name}" fixedScale="true"><Channel column="{value_column_name}"/></TimeSeries>'
-    y_axis_documentation = '<Text name="text1" value="Be aware: The y-axis scales to maximum value in the file. This could result in peaks looking smaller or bigger than the same peak in other files."/>'
+    y_axis_documentation = '<Text name="text1" value="Be aware: The y-axis scales to maximum value in this task. This could result in an amplitude looking smaller or bigger than the same amplitude in other tasks."/>'
     tail = '</View>'
 
 
