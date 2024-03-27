@@ -208,15 +208,15 @@ def exportProject(request, project_id):
         # Create a zip file containing both JSON annotations
         zip_file_path = os.path.join(settings.MEDIA_ROOT, settings.UPLOAD_DIR, str(project_id), f"{project_title}_annotations.zip")
 
-        with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+        with zipfile.ZipFile(zip_file_path, 'w', allowZip64=True) as zipf:
             # Create the 'subject_annotations' folder and add the JSON file
-            with zipf.open('subject_annotations/subject_annotations.json', 'w') as subject_file:
+            with zipf.open('subject_annotations/subject_annotations.json', 'w', force_zip64=True) as subject_file:
                 subject_file.write(json.dumps(subject_annotations).encode('utf-8'))
             
             # Add subject data files to the 'subject_annotations' folder
             for file_path in subject_data_paths:
                 file_name = os.path.basename(file_path)
-                with zipf.open(os.path.join('subject_annotations', file_name), 'w') as subject_data_file:
+                with zipf.open(os.path.join('subject_annotations', file_name), 'w', force_zip64=True) as subject_data_file:
                     with open(file_path, 'rb') as f:
                         subject_data_file.write(f.read())
 
@@ -224,13 +224,13 @@ def exportProject(request, project_id):
                 print(f"Adding {file_name} to ZIP")
 
             # Create the 'activity_annotation' folder and add the JSON file
-            with zipf.open('activity_annotations/activity_annotations.json', 'w') as activity_file:
+            with zipf.open('activity_annotations/activity_annotations.json', 'w', force_zip64=True) as activity_file:
                 activity_file.write(json.dumps(activity_annotations).encode('utf-8'))
 
             # Add the chunk files to the 'activity_annotations' folder
             for chunk_file in chunk_files:
                 chunk_file_path = os.path.join(project_upload_folder, chunk_file)
-                with zipf.open(os.path.join('activity_annotations', chunk_file), 'w') as chunk_data_file:
+                with zipf.open(os.path.join('activity_annotations', chunk_file), 'w', force_zip64=True) as chunk_data_file:
                     with open(chunk_file_path, 'rb') as f:
                         chunk_data_file.write(f.read())
 
@@ -248,7 +248,7 @@ def exportProject(request, project_id):
         zip_model = ZipFileModel.objects.create(name=zip_file_name, zip_file=zip_file_path, project_id=project_id)
         zip_model.zip_file.save(zip_file_name, open(zip_file_path, 'rb'))
 
-        return redirect('landingpage:landingpage', project_id=project_id)
+        return redirect('landingpage:export-project', project_id=project_id)
         
     
     return render(request, 'exportproject.html', {'project':project, 'zip_files':zip_files})
