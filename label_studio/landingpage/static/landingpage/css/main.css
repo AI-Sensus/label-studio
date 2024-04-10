@@ -41,6 +41,14 @@ height: 48px;
     padding: 10px;
 }
 
+input[type="submit"] {
+    width: 300px !important;
+    margin-right: 10px;
+    background-color: #09f !important;
+    box-shadow: inset 0px -1px 0px rgba(0,0,0,0.1);
+    color: white;
+}
+
 .buttons form input[type="submit"] {
     width: 300px !important;
     margin-right: 10px;
