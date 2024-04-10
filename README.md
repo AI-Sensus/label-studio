@@ -7,7 +7,7 @@ The version of LS is important. We use an older version because this version sti
 ### Set up local project for development
 ```bash
 # Set-up virtual environment (python v3.10)
-pip install virtualenv (only if not yet installed virtualenv)
+pip install virtualenv #(only if not yet installed virtualenv)
 python -m venv <venv-name>
 <venv-name>/Scripts/activate
 # Clone the repository
