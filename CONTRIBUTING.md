@@ -1,12 +1,12 @@
-# Contribute to Label Studio
+# Contribute to M-MOVE-IT
 
-Thanks for taking the time to contribute! Contributions from people like you help make Label Studio an amazing tool to use. 
+Thanks for taking the time to contribute! Contributions from people like you help make M-MOVE-IT an amazing tool to use. 
 
-This document provides guidelines for contributing code and documentation to Label Studio. Following these guidelines makes it easier for the maintainers to respond to your pull requests and provide timely and helpful feedback to help you finalize your requested changes.
+This document provides guidelines for contributing code and documentation to M-MOVE-IT. Following these guidelines makes it easier for the maintainers to respond to your pull requests and provide timely and helpful feedback to help you finalize your requested changes.
 
 ## Types of Contributions
 
-You can contribute to Label Studio by submitting [bug reports and feature requests](), or by writing code to do any of the following:
+You can contribute to M-MOVE-IT by submitting [bug reports and feature requests](), or by writing code to do any of the following:
 - Fix a bug.
 - Provide [example machine learning backend code](https://github.com/heartexlabs/label-studio-ml-backend) to help others add a machine learning backend for a specific model.
 - Share [example annotation templates](https://github.com/heartexlabs/label-studio/tree/master/label_studio/annotation_templates) for specific use cases.
@@ -21,7 +21,7 @@ If you're not sure whether an idea you have for Label Studio matches up with our
 
 ## How to Start Contributing
 
-If you want to contribute to Label Studio, but aren't sure where to start, review the [issues tagged with "good first issue"](https://github.com/heartexlabs/label-studio/labels/good%20first%20issue) or take a look at [the existing issues](https://github.com/heartexlabs/label-studio/issues) to see if any interest you.
+If you want to contribute to M-MOVE-IT, but aren't sure where to start, review the [issues tagged with "good first issue"](https://github.com/heartexlabs/label-studio/labels/good%20first%20issue) or take a look at [the existing issues](https://github.com/heartexlabs/label-studio/issues) to see if any interest you.
 
 If you decide to work on an issue, leave a comment so that you don't duplicate work that might be in progress and to coordinate work with others. 
 
@@ -32,15 +32,15 @@ If you haven't opened a pull request before, check out the [GitHub documentation
 We value input from each member of the community, and we ask that you follow our [code of conduct](https://github.com/heartexlabs/label-studio/blob/master/CODE_OF_CONDUCT.md). We are a small team, but we try to respond to issues and pull requests within 2 business days. 
 
 ### Before you start
-For changes that you contribute to any of the Label Studio repositories, please do the following:
+For changes that you contribute to any of the M-MOVE-IT repositories, please do the following:
 - Create issues for any major changes and enhancements that you want to make. 
 - Keep pull requests specific to one issue. Shorter pull requests are preferred and are easier to review. 
 
 ### Committing code
-Make sure that you contribute your changes to the correct repository. Label Studio is built in a few separate repositories including this one:
+Make sure that you contribute your changes to the correct repository. M-MOVE-IT is built in a few separate repositories including this one:
 - Changes to the data manager belong in the [data manager repository](https://github.com/heartexlabs/dm2).
 - Changes to the labeling or editing workflow belong in the [label-studio-frontend repository](https://github.com/heartexlabs/label-studio-frontend).
-- Changes to the export formats available in Label Studio belong in the [label studio converter repository](https://github.com/heartexlabs/label-studio-converter).
+- Changes to the export formats available in M-MOVE-IT belong in the [label studio converter repository](https://github.com/heartexlabs/label-studio-converter).
 - Changes to the machine learning backend functionality belong in the [label-studio-ml-backend repository](https://github.com/heartexlabs/label-studio-ml-backend).
 
 ### Code standards
@@ -57,6 +57,21 @@ Follow these code formatting guidelines:
 - Make sure that changes you make work on Windows, Mac, and Linux operating systems.
 - Include unit tests when you contribute bug fixes and new features. Unit tests help prove that your code works correctly and protects against future breaking changes.
 - Make sure that the code coverage checks and automatic tests for pull requests pass. 
+
+### Apply frontend changes
+
+The frontend part of M-MOVE-IT app lies in the `frontend/` folder and written in React JSX. In case you've made some changes there, the following commands should be run before building / starting the instance:
+
+```
+cd label_studio/frontend/
+npm ci
+npx webpack
+cd ../..
+python label_studio/manage.py collectstatic --no-input
+```
+
+### Django
+M-MOVE-IT has been built using the Django framework. We keep our additions separate from the code from LS. Django allows this by making use of apps for different functionalities of the web app. All of our work is the following apps: landingpage, sensormodel, sensordata, subjectannoation, taskgeneration. To integrate these apps in the functionality of the complete project adjustments have been made in the ‘core’ app. These can be found in ‘core/urls.py’ and ‘core/settings/base.py’.
 
 ### Additional questions
 
