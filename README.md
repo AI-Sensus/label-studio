@@ -28,7 +28,7 @@ python label_studio/manage.py runserver
 After installing M-MOVE-IT, sign up for label-studio at the first webpage when running the app.
 
 ### Exiftool
-M-MOVE-IT utilizes Exiftool for metadata handling. To ensure proper functionality, verify that Exiftool is installed by running `exiftool -ver` in the console. If Exiftool is not installed, visit [Exiftool installation page](https://exiftool.org/install.html) for instructions. After installation, confirm that Exiftool is added to the system path by running `exiftool -ver` again.
+M-MOVE-IT utilizes Exiftool for metadata handling. To ensure proper functionality, verify that Exiftool is installed by running `exiftool -ver` in the terminal. If Exiftool is not installed, visit [Exiftool installation page](https://exiftool.org/install.html) for instructions. After installation, confirm that Exiftool is added to the system path by running `exiftool -ver` again.
 
 ### Landingpage
 The ‘landingpage’ app handles the overview of all projects, this is called the dashboard. Also, it handles the project pages of all the projects. Here one can find all functionality explained in the steps one should take.
