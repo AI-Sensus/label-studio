@@ -6,7 +6,7 @@ The version of LS is important. We use an older version because this version sti
 
 Watch [this seminar presentation](https://www.youtube.com/watch?v=b4Jyy0eGvug&ab_channel=JacobKamminga) that explains the motivation for this project and a live demo of this tool.
 
-### Set up local project for development
+### Install M-MOVE-IT
 ```bash
 # Set-up virtual environment (python v3.10)
 pip install virtualenv #only if not yet installed virtualenv
@@ -25,22 +25,10 @@ python label_studio/manage.py collectstatic
 # Run the server locally at http://localhost:8080
 python label_studio/manage.py runserver
 ```
-After setting up the local development project, sign up for label-studio at the first webpage when running the app.
+After installing M-MOVE-IT, sign up for label-studio at the first webpage when running the app.
 
-### Apply frontend changes
-
-The frontend part of Label Studio app lies in the `frontend/` folder and written in React JSX. In case you've made some changes there, the following commands should be run before building / starting the instance:
-
-```
-cd label_studio/frontend/
-npm ci
-npx webpack
-cd ../..
-python label_studio/manage.py collectstatic --no-input
-```
-
-### Django
-Label Studio has been built using the Django framework. We keep our additions separate from the code from LS. Django allows this by making use of apps for different functionalities of the web app. All of our work is the following apps: landingpage, sensormodel, sensordata, subjectannoation, taskgeneration. To integrate these apps in the functionality of the complete project adjustments have been made in the ‘core’ app. These can be found in ‘core/urls.py’ and ‘core/settings/base.py’.
+### Exiftool
+M-MOVE-IT utilizes Exiftool for metadata handling. To ensure proper functionality, verify that Exiftool is installed by running `exiftool -ver` in the terminal. If Exiftool is not installed, visit [Exiftool installation page](https://exiftool.org/install.html) for instructions. After installation, confirm that Exiftool is added to the system path by running `exiftool -ver` again.
 
 ### Landingpage
 The ‘landingpage’ app handles the overview of all projects, this is called the dashboard. Also, it handles the project pages of all the projects. Here one can find all functionality explained in the steps one should take.
