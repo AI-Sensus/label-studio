@@ -6,6 +6,8 @@ The version of LS is important. We use an older version because this version sti
 
 Watch [this seminar presentation](https://www.youtube.com/watch?v=b4Jyy0eGvug&ab_channel=JacobKamminga) that explains the motivation for this project and a live demo of this tool.
 
+For those interested in contributing, please refer to [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ### Install M-MOVE-IT
 ```bash
 # Set-up virtual environment (python v3.10)
